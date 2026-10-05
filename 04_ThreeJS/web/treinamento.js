@@ -171,6 +171,7 @@ export async function iniciar(ctx) {
   }
   // voz do navegador (pt-BR). Retorna uma promessa que termina quando a fala acaba (ou null sem voz)
   function vozSintetica(texto, voz = 'f') {
+    const lento = /_lento$/.test(voz); voz = voz.replace('_lento', '');      // fala arrastada (condutor com sinais de embriaguez)
     if (S.voz === false || !('speechSynthesis' in window)) return null;
     const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').startsWith('pt'));
     if (!vs.length) { if (!S.avisoVoz) { S.avisoVoz = true; console.warn('Sem voz sintética em português neste navegador: só legendas.'); } return null; }
@@ -181,6 +182,7 @@ export async function iniciar(ctx) {
       const mas = lista.filter(v => /antonio|daniel|ricardo|masculin|male/i.test(v.name) && !/female/i.test(v.name));
       u.voice = (voz === 'm' ? mas[0] : fem[0]) || lista[(voz === 'm' ? 1 : 0) % lista.length];
       u.pitch = voz === 'c' ? 1.6 : voz === 'm' ? .85 : 1.05; u.rate = voz === 'm' ? 1 : .95;
+      if (lento) { u.rate = .66; u.pitch *= .9; }
       return new Promise(r => { u.onend = u.onerror = () => r(); speechSynthesis.speak(u); });
     } catch (e) { return null; }
   }
@@ -448,10 +450,10 @@ export async function iniciar(ctx) {
     soltar(); u.semVirar = true; animar(n, 'parada', 1e6, .6);
     await suave(.9, e => { n.position.lerpVectors(ini, fora, e); n.rotation.y = r0 + (Math.PI - r0) * e; });      // levanta virando para a calcada
     await new Promise(fim => {                              // dois passos para longe do carro
-      u.vel = 1.0; u.rota = [new THREE.Vector3(fora.x - .55, 0, fora.z - 1.0)];
+      u.vel = u.embriagado ? .55 : 1.0; u.rota = [new THREE.Vector3(fora.x - .55, 0, fora.z - 1.0)];
       if (u.acoes?.andando) animar(n, 'andando', 1e6, .25);
       u.aoChegar = () => { animar(n, 'parada', 1e6, .3); u.semVirar = false; fim(); };
-      setTimeout(fim, 4000);                                // garantia, caso o quadro esteja pausado
+      setTimeout(fim, 5000);                                // garantia, caso o quadro esteja pausado
     });
     somPorta(SOM_PORTA.fechar); await moverPorta(0, .6);
   }
@@ -463,15 +465,62 @@ export async function iniciar(ctx) {
     const h = new THREE.Mesh(new THREE.SphereGeometry(k === 'lixeira' ? .3 : k === 'maleta' ? .22 : .14, 10, 8), new THREE.MeshBasicMaterial({ visible: false }));
     o.getWorldPosition(h.position); h.position.y += k === 'lixeira' ? .2 : .05; h.userData.item = k; scene.add(h); itens[k] = { o, h };
   }
-  let naMaoObj = null;
+  // etilometro na mao do agente: visor com a leitura e bocal descartavel encaixado na ponta
+  let naMaoObj = null, bocalObj = null;
+  const vcv = document.createElement('canvas'); vcv.width = 160; vcv.height = 120;
+  const vtex = new THREE.CanvasTexture(vcv); vtex.colorSpace = THREE.SRGBColorSpace;
+  function visorTexto(valor = 'PRONTO', unidade = '') {
+    const g = vcv.getContext('2d'); g.fillStyle = '#0c1a12'; g.fillRect(0, 0, 160, 120);
+    g.fillStyle = '#8dffb0'; g.textAlign = 'center';
+    g.font = `700 ${valor.length > 5 ? 34 : 58}px Consolas, monospace`; g.fillText(valor, 80, unidade ? 66 : 76);
+    if (unidade) { g.font = '600 26px Consolas, monospace'; g.fillText(unidade, 80, 104); }
+    vtex.needsUpdate = true;
+  }
+  visorTexto();
+  const MAO_POS = new THREE.Vector3(.17, -.17, -.42), MAO_ROT = new THREE.Quaternion().setFromEuler(new THREE.Euler(1.15, .25, 0));
   function pegarEtilometro(pegar) {
     const it = itens.etilometro; if (!it) { S.naMao = pegar; return; }
     S.naMao = pegar; it.o.visible = !pegar;
     if (pegar && !naMaoObj) {
-      naMaoObj = it.o.clone(); naMaoObj.visible = true; naMaoObj.position.set(.17, -.17, -.42); naMaoObj.rotation.set(1.15, .25, 0);
-      camera.add(naMaoObj);
+      naMaoObj = it.o.clone(); naMaoObj.visible = true;
+      // visor (no modelo: em cima do corpo, do lado do bocal) e bocal (na ponta: -Z do aparelho)
+      const visor = new THREE.Mesh(new THREE.PlaneGeometry(.052, .04), new THREE.MeshBasicMaterial({ map: vtex, toneMapped: false, fog: false }));
+      visor.rotation.x = -Math.PI / 2; visor.position.set(0, .0445, -.03); naMaoObj.add(visor);
+      bocalObj = new THREE.Mesh(new THREE.CylinderGeometry(.0075, .0095, .085, 12), new THREE.MeshStandardMaterial({ color: 0xf2f4f6, roughness: .35 }));
+      ctx.iluminar(bocalObj.material); bocalObj.rotation.x = Math.PI / 2; bocalObj.position.set(0, .022, -.145); bocalObj.visible = false; naMaoObj.add(bocalObj);
     }
-    if (naMaoObj) naMaoObj.visible = pegar;
+    if (naMaoObj) {
+      naMaoObj.userData.naBoca = 0; camera.add(naMaoObj); naMaoObj.position.copy(MAO_POS); naMaoObj.quaternion.copy(MAO_ROT);
+      naMaoObj.visible = pegar;
+      if (!pegar) { bocalObj.visible = false; visorTexto(); }
+    }
+  }
+  // posicao e orientacao do aparelho diante da boca do condutor (bocal apontado para a boca, visor para cima)
+  const EB = new THREE.Vector3(), EX = new THREE.Vector3(), EYv = new THREE.Vector3(), EZ = new THREE.Vector3(), EM = new THREE.Matrix4();
+  function alvoBoca(pos, quat) {
+    const o = npcs.condutor?.userData.olhar; if (!o) return false;
+    EZ.copy(frenteCabeca(o));                               // frente do rosto; OV1 fica entre os olhos
+    EB.copy(OV1); EB.y -= .078; EB.addScaledVector(EZ, .045);          // boca
+    // o aparelho vem do lado do agente (pela janela): fica entre a boca e quem segura, puxando um pouco para a frente do rosto
+    camera.getWorldPosition(EX); EX.sub(EB); EX.y *= .25; EX.normalize(); EZ.multiplyScalar(.45).add(EX).normalize();
+    pos.copy(EB).addScaledVector(EZ, .2);
+    EYv.set(0, 1, 0).addScaledVector(EZ, -EZ.y).normalize(); EX.crossVectors(EYv, EZ);
+    quat.setFromRotationMatrix(EM.makeBasis(EX, EYv, EZ));
+    return true;
+  }
+  async function levarABoca() {
+    if (!naMaoObj) return;
+    const p1 = new THREE.Vector3(), q1 = new THREE.Quaternion(); if (!alvoBoca(p1, q1)) return;
+    scene.attach(naMaoObj); naMaoObj.userData.naBoca = 1;
+    const p0 = naMaoObj.position.clone(), q0 = naMaoObj.quaternion.clone();
+    await suave(.7, e => { if (!alvoBoca(p1, q1)) return; naMaoObj.position.lerpVectors(p0, p1, e); naMaoObj.quaternion.slerpQuaternions(q0, q1, e); });
+    if (naMaoObj.userData.naBoca === 1) naMaoObj.userData.naBoca = 2;      // dai em diante acompanha a cabeca
+  }
+  async function trazerDaBoca() {
+    if (!naMaoObj || !naMaoObj.userData.naBoca) return;
+    naMaoObj.userData.naBoca = 0; camera.attach(naMaoObj);
+    const p0 = naMaoObj.position.clone(), q0 = naMaoObj.quaternion.clone();
+    await suave(.7, e => { naMaoObj.position.lerpVectors(p0, MAO_POS, e); naMaoObj.quaternion.slerpQuaternions(q0, MAO_ROT, e); });
   }
   function bip() {
     if (window.__som?.tocar('bip_etilometro')) { setTimeout(() => window.__som.tocar('bip_etilometro'), 220); return; }   // bipe duplo
@@ -518,17 +567,19 @@ export async function iniciar(ctx) {
     limparNPCs();
     if (v.passageiro !== 'nenhum' && v.modelo === 'condutor_b') v.modelo = 'condutor_a';     // a passageira e sempre a condutor_b
     npcs.condutor = novoNPC(v.modelo, 'Condutor', 1);
+    npcs.condutor.userData.embriagado = v.sinais === 'visiveis';
     if (v.comportamento === 'nervoso') { npcs.condutor.userData.base = 'sentado_nervoso'; animar(npcs.condutor, 'sentado_nervoso', 1e6); }
     if (v.passageiro !== 'nenhum') npcs.passageiro = novoNPC('condutor_b', 'Passageira', -1);
   }
   const feminino = () => S.variacao.modelo === 'condutor_b';
-  const vozC = () => feminino() ? 'f' : 'm';
+  const embriagado = () => S.variacao.sinais === 'visiveis';
+  const vozC = () => (feminino() ? 'f' : 'm') + (embriagado() ? '_lento' : '');
   // falas do agente e do condutor no genero certo
   const T = t => !feminino() ? t : t.replace(/\bo senhor\b/g, 'a senhora').replace(/\bO senhor\b/g, 'A senhora').replace(/\bpreso\b/g, 'presa');
   const TC = t => feminino() ? t.replace(/\bObrigado\b/g, 'Obrigada') : t;      // falas do proprio condutor
   function condFala(texto) {
     const c = npcs.condutor; if (!c) return Promise.resolve();
-    return dizer(c, 'Condutor', { texto: TC(texto), gesto: c.userData.assento ? 'sentado_falando' : 'falando' }, vozC());
+    return dizer(c, embriagado() ? 'Condutor (fala arrastada)' : 'Condutor', { texto: TC(texto), gesto: c.userData.assento ? 'sentado_falando' : 'falando' }, vozC());
   }
 
   /* ================= equipe da operacao (figurantes): agentes de colete e policiais ================= */
@@ -751,14 +802,17 @@ export async function iniciar(ctx) {
   }
   function teste() {
     if (!S.naMao) { fechar(); return legenda('Equipamento', 'O etilômetro está na mesa de equipamentos (toalha azul), ao lado. Pegue o aparelho e volte.', 5); }
-    painelOpc('Etilômetro', 'Bocal', CEN.dialogos.bocal, () => painelOpc('Etilômetro', 'Orientação ao condutor', CEN.dialogos.sopro, soprar));
+    painelOpc('Etilômetro', 'Bocal', CEN.dialogos.bocal, () => { if (bocalObj) bocalObj.visible = true; painelOpc('Etilômetro', 'Orientação ao condutor', CEN.dialogos.sopro, soprar); });
   }
   function soprar() {
     const v = S.variacao, r = CEN.etilometro[v.condutor];
     legenda('Etilômetro', 'Soprando… aguarde a leitura.', 3.6);
+    { const c = npcs.condutor; if (c?.userData.assento) animar(c, 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
+    visorTexto('SOPRE'); levarABoca();
     setTimeout(() => {
       if (!A) return;
       bip(); A.testado = true; A.resultado = r; A.bocalUsado = true; fecharPaineis();
+      visorTexto(r.medido, 'mg/L'); trazerDaBoca();
       dialogo.mostrar({ tag: 'Etilômetro · leitura', titulo: `${r.medido} mg/L`, texto: `Valor considerado: ${r.considerado} mg/L\n${CEN.etilometro.aparelho}`,
         botoes: [{ label: 'Mostrar o visor e informar o resultado ao condutor', acao: mostrarResultado }, { label: 'Guardar o aparelho sem mostrar', acao: fechar }] });
       status();
@@ -1013,7 +1067,7 @@ export async function iniciar(ctx) {
   function usarItem(k) {
     if (k === 'etilometro') { pegarEtilometro(true); legenda('Equipamento', 'Etilômetro na mão. ' + CEN.etilometro.aparelho + '.', 4); status(); }
     else if (k === 'tablet') abrirChecklist();
-    else if (k === 'lixeira' && A?.bocalUsado) { A.bocalUsado = false; registrar('descartar_bocal'); legenda('Equipamento', 'Bocal usado descartado.', 2.5); }
+    else if (k === 'lixeira' && A?.bocalUsado) { A.bocalUsado = false; registrar('descartar_bocal'); if (bocalObj) bocalObj.visible = false; legenda('Equipamento', 'Bocal usado descartado.', 2.5); }
     else legenda('Equipamento', INFO_ITEM[k], 5);
   }
 
@@ -1053,10 +1107,13 @@ export async function iniciar(ctx) {
     if (agora > legAte) { leg.visible = false; const hl = document.getElementById('legendaHTML'); if (hl && !hl.hidden) hl.hidden = true; }
     moverCarro(dt);
     seguirDocumento();
+    if (naMaoObj?.userData.naBoca === 2) alvoBoca(naMaoObj.position, naMaoObj.quaternion);
     camera.getWorldPosition(V); camera.getWorldDirection(V2);
     for (const n of [...Object.values(npcs), ...Object.values(figurantes)]) {
       const u = n.userData;
       seguirCarro(n);
+      if (u.embriagado) n.rotation.z = (u.assento ? .04 : .075) * Math.sin(agora * .0012) + .02 * Math.sin(agora * .0031);      // oscila
+      else if (n.rotation.z) n.rotation.z = 0;
       u.mixer?.update(dt);
       animarRosto(n, dt, agora);
       olhar(n, dt, V);
@@ -1085,7 +1142,7 @@ export async function iniciar(ctx) {
     apontar, painelAberto: () => paineis.some(p => p.mesh.visible) || docVista.visible,
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, fecharVista, docVista, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, levarABoca, trazerDaBoca, visorTexto, etil: () => naMaoObj, fecharVista, docVista, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;
