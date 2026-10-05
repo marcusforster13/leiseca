@@ -135,7 +135,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
             l2 = (fa.matrix_local.inverted() @ hd.matrix_local).translation.length
             L = l1 + l2
             ombro = (desejado[ua.parent.name] @ (ua.parent.matrix_local.inverted() @ ua.matrix_local)).translation
-            punho = ombro + lado * L * .60 + frente * L * .68 + cima * L * .24        # a frente do ombro, acima do peitoril da janela
+            punho = ombro + lado * L * .55 + frente * L * .75 + cima * L * .24        # a frente do ombro, acima do peitoril da janela
             cot = ik_cotovelo(ombro, punho, l1, l2, lado * 1.0 - frente * .45 + cima * .2)      # cotovelo para fora, apoiado na janela
             M_ua, _ = mira(ua, fa, desejado[ua.parent.name], cot - ombro)
             M_fa, _ = mira(fa, hd, M_ua, punho - cot)

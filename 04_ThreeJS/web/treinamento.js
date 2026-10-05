@@ -414,7 +414,7 @@ export async function iniciar(ctx) {
   const BANCO = CFG.banco || [.2, .36, .5];
   function seguirCarro(n) {
     const u = n.userData; if (!u.assento) return;
-    V.set(BANCO[0] - .04, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);
+    V.set(BANCO[0] + .08, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);      // um pouco a frente no banco: o braco sai pelo meio da janela
     n.position.set(carro.position.x + V.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + V.z);
     n.rotation.y = carro.rotation.y + Math.PI / 2; n.visible = carro.visible;
   }
