@@ -1,16 +1,25 @@
 # Sons do treinamento — Operação Lei Seca
 
-Coloque os arquivos em `06_Audio\brutos\` com o nome da tabela (`.mp3`, `.ogg` ou `.wav`). O pipeline copia para o site.
+Os arquivos ficam em `06_Audio\brutos\` (`.mp3`, `.ogg` ou `.wav`). O pipeline copia para o site.
 
-Fontes com licença livre: **freesound.org** (filtro *Creative Commons 0*) e **pixabay.com/sound-effects**. Não extrair áudio de vídeos.
+Fonte: **freesound.org**, só sons com licença **Creative Commons 0** (uso livre, sem crédito obrigatório). Foi baixada a versão MP3 de cada som. Não extrair áudio de vídeos.
 
-| Arquivo | O que é | Situação |
+## Já temos
+
+| Arquivo | O que é | Origem (Freesound, CC0) |
 |---|---|---|
-| `amb_rua_noite` | Ambiente de rua à noite (loop) | já temos |
-| `bip_etilometro` | Bipe do etilômetro ao terminar a leitura | falta (o site gera um bipe simples) |
-| `radio_chiado`, `radio_bip` | Rádio da coordenação | falta |
-| `transito_passando` | Carros passando na faixa livre (loop) | falta |
-| `motor_carro_chegando` | Carro chegando e parando | falta |
-| `sirene_longe`, `cachorro_longe` | Sons distantes, esporádicos | falta |
+| `amb_rua_noite` | Ambiente de rua à noite (loop) | veio do projeto anterior |
+| `amb_transito_noite` | Trânsito noturno a média distância: carros, motos e ônibus passando (loop) | "Medium Night City Traffic 2", brunoboselli, som 871592 |
+| `motor_carro_chegando` | Carro se aproximando e parando (o site toca só o trecho de 16,5 s a 26 s) | "Pulls up and Parks Car", benwer, som 260828 |
+| `bip_etilometro` | Bipe curto do aparelho (o site toca duas vezes) | "Medium Electronic Beep", wubitog, som 188383 |
+| `radio_bip` | Bipe de rádio antes das falas da coordenação | "Walkie Talkie - Roger Beep", bruce965, som 321906 |
+| `radio_chiado` | Chiado de rádio (baixado, ainda não usado) | "Walkie_Talkie_Static", crcavol, som 154654 |
+
+## Falta
+
+| Arquivo | O que é |
+|---|---|
+| `sirene_longe`, `cachorro_longe` | Sons distantes, esporádicos (o site já sabe tocar se os arquivos existirem) |
+| `porta_carro` | Porta do carro abrindo e fechando, para quando o condutor descer |
 
 Vozes: rode `gerar_roteiro_vozes.py` para gerar o roteiro de gravação. Sem gravação, o site usa a voz sintética do navegador, com legenda.

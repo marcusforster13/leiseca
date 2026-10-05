@@ -11,10 +11,12 @@ import * as THREE from 'three';
 // posicoes em coordenadas da cena web (Y para cima)
 const DEF = {
   amb_rua_noite:       { tipo: 'ambiente', fora: .5, dentro: .5 },
+  amb_transito_noite:  { tipo: 'ambiente', fora: .3, dentro: .3 },
+  motor_carro_chegando: { tipo: 'evento', vol: .55, ini: 16.5, dur: 9.5 },   // so o trecho em que o carro se aproxima e para
   amb_casa_interior:   { tipo: 'ambiente', fora: 0, dentro: .35 },
   cachorro_longe:      { tipo: 'esporadico', area: [[-45, -25], [-45, 45]], vol: .45, intervalo: [25, 60] },
   sirene_longe:        { tipo: 'evento', vol: .4 },
-  radio_chiado:        { tipo: 'evento', vol: .5 },
+  radio_chiado:        { tipo: 'evento', vol: .3 },
   radio_bip:           { tipo: 'evento', vol: .6 },
   bip_etilometro:      { tipo: 'evento', vol: .7 }
 };
@@ -59,6 +61,13 @@ export async function iniciarAudio({ scene, camera, renderer }) {
     return Math.min(.95 / pico, Math.pow(10, (-20 - 20 * Math.log10(rms)) / 20), 12);
   }
   const vol = (n, v) => v * (ganho[n] || 1);
+  // toca so um trecho do arquivo (ini, dur em segundos), com 1 s de saida suave
+  function recorte(a, d, v) {
+    if (d.ini != null) a.offset = d.ini;
+    if (!d.dur) return;
+    a.duration = d.dur; const t = listener.context.currentTime;
+    a.gain.gain.setValueAtTime(v, t + d.dur - 1); a.gain.gain.linearRampToValueAtTime(0, t + d.dur);
+  }
 
   function ligar() {
     if (ligado || !pronto) return; ligado = true;
@@ -122,10 +131,10 @@ export async function iniciarAudio({ scene, camera, renderer }) {
       let a;
       if (pos) {
         a = new THREE.PositionalAudio(listener); a.setBuffer(buffers[n]); a.setRefDistance(1.2); a.setVolume(vol(n, d.vol));
-        const o = new THREE.Object3D(); o.position.copy(pos); o.add(a); scene.add(o); a.play();
+        const o = new THREE.Object3D(); o.position.copy(pos); o.add(a); scene.add(o); recorte(a, d, vol(n, d.vol)); a.play();
         a.onEnded = () => { a.isPlaying = false; scene.remove(o); };
       } else {
-        a = new THREE.Audio(listener); a.setBuffer(buffers[n]); a.setVolume(vol(n, d.vol)); a.play();
+        a = new THREE.Audio(listener); a.setBuffer(buffers[n]); a.setVolume(vol(n, d.vol)); recorte(a, d, vol(n, d.vol)); a.play();
       }
       if (!analisar || !a.source) return true;
       const an = listener.context.createAnalyser(); an.fftSize = 512; a.source.connect(an);

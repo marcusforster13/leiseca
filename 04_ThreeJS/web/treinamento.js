@@ -440,7 +440,7 @@ export async function iniciar(ctx) {
     if (naMaoObj) naMaoObj.visible = pegar;
   }
   function bip() {
-    if (window.__som?.tocar('bip_etilometro')) return;
+    if (window.__som?.tocar('bip_etilometro')) { setTimeout(() => window.__som.tocar('bip_etilometro'), 220); return; }   // bipe duplo
     try {
       const ac = bip.ac = bip.ac || new AudioContext(), o = ac.createOscillator(), g = ac.createGain();
       o.frequency.value = 1750; g.gain.setValueAtTime(.12, ac.currentTime); g.gain.setValueAtTime(0, ac.currentTime + .35);
@@ -547,6 +547,7 @@ export async function iniciar(ctx) {
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
     const abrir = () => {
+      window.__som?.tocar('radio_bip');
       falar('Rádio · Coordenação', CEN.radio.inicio, 'm');
       setTimeout(() => dica('Aponte para o carro que chega e aperte o gatilho (ou clique) para sinalizar a parada.'), 3500);
       A.tAuto = setTimeout(() => { if (A && A.fase === 'chegando' && !C.rota.length) entrar(false); }, 16000);
@@ -558,6 +559,7 @@ export async function iniciar(ctx) {
   function entrar(sinalizou) {
     if (!A || A.fase !== 'chegando' || C.rota.length) return;
     clearTimeout(A.tAuto);
+    window.__som?.tocar('motor_carro_chegando', carro.position.clone().setY(.6));
     if (sinalizou) { registrar('sinalizar_parada'); legenda('Agente', 'Sinal de parada: braço estendido, indicando o ponto de abordagem.', 3); }
     C.vmax = 5; C.frear = true; C.rota = [[PARADA.x, PARADA.z]];
     C.aoChegar = () => { A.fase = 'parado'; carro.rotation.y = 0; dica('Veículo parado. Aproxime-se pelo lado do motorista (área protegida) e fale com o condutor.'); status(); };
@@ -659,12 +661,12 @@ export async function iniciar(ctx) {
     if (v.alcool === 'sim' && !A.cnh) return painelOpc('Providências', 'Habilitação do condutor', D.cnh, () => { A.cnh = true; aposDecisao(); });
     if (v.condutor === 'alcool_crime' && !A.pm) return painelOpc('Providências', 'Crime de trânsito (art. 306)', [
       { fala: 'Acionar os policiais: condução à delegacia com o auto, o resultado impresso e as testemunhas', acao: 'acionar_pm_crime', radio: true },
-      { fala: 'Deixar o condutor aguardando na tenda e seguir a operação' }], op => { A.pm = true; if (op.radio) falar('Rádio · Coordenação', CEN.radio.crime, 'm'); setTimeout(aposDecisao, op.radio ? 5200 : 300); });
+      { fala: 'Deixar o condutor aguardando na tenda e seguir a operação' }], op => { A.pm = true; if (op.radio) { window.__som?.tocar('radio_bip'); falar('Rádio · Coordenação', CEN.radio.crime, 'm'); } setTimeout(aposDecisao, op.radio ? 5200 : 300); });
     if (!A.veiculoOk) return destinoVeiculo();
   }
   function destinoVeiculo() {
     const D = CEN.dialogos, v = S.variacao, tem = v.passageiro !== 'nenhum';
-    const fim = d => { A.destino = d; A.veiculoOk = true; status(); dica('Fale com o condutor para encerrar o atendimento.'); if (d === 'remover') falar('Rádio · Coordenação', CEN.radio.guincho, 'm'); };
+    const fim = d => { A.destino = d; A.veiculoOk = true; status(); dica('Fale com o condutor para encerrar o atendimento.'); if (d === 'remover') { window.__som?.tocar('radio_bip'); falar('Rádio · Coordenação', CEN.radio.guincho, 'm'); } };
     const remover = () => {
       if (v.veiculo === 'remover') registrar('veiculo_correto');
       else penalidade(v.veiculo === 'liberar' ? -6 : -3, 'Remoção do veículo sem necessidade', v.veiculo === 'liberar' ? 'Sem irregularidade, o veículo segue com o condutor.' : 'Havia condutor habilitado e apto para assumir o veículo (Res. 1.031/2026, art. 11).');
