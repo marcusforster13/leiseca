@@ -121,6 +121,53 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
     for lado, sgn in (("L", -1), ("R", 1)):
         ua, fa, hd = osso[lado + " UpperArm"], osso[lado + " Forearm"], osso[lado + " Hand"]
         lado = lado_r * sgn
+        if tipo == "sentado_entrega" and sgn < 0:
+            # braco esquerdo estendido pela janela, para a FRENTE e para fora (em direcao ao agente), com a palma para BAIXO:
+            # o documento fica preso em pinca, entre o polegar e o indicador
+            from mathutils import Quaternion
+            import math as _m
+            def fixar(b, M_pai, M):
+                desejado[b.name] = M
+                base = M_pai @ b.parent.matrix_local.inverted() @ b.matrix_local
+                pb = arm.pose.bones[b.name]
+                pb.rotation_quaternion = (base.inverted() @ M).to_quaternion(); pb.keyframe_insert("rotation_quaternion", frame=f)
+            l1 = (ua.matrix_local.inverted() @ fa.matrix_local).translation.length
+            l2 = (fa.matrix_local.inverted() @ hd.matrix_local).translation.length
+            L = l1 + l2
+            ombro = (desejado[ua.parent.name] @ (ua.parent.matrix_local.inverted() @ ua.matrix_local)).translation
+            punho = ombro + lado * L * .60 + frente * L * .68 + cima * L * .24        # a frente do ombro, acima do peitoril da janela
+            cot = ik_cotovelo(ombro, punho, l1, l2, lado * 1.0 - frente * .45 + cima * .2)      # cotovelo para fora, apoiado na janela
+            M_ua, _ = mira(ua, fa, desejado[ua.parent.name], cot - ombro)
+            M_fa, _ = mira(fa, hd, M_ua, punho - cot)
+            dir_mao = (frente * .78 + lado * .6 + cima * .05).normalized()
+            d2, d0 = osso.get("L Finger2"), osso.get("L Finger0")
+            if d2 and d0:
+                M_hd, _ = mira(hd, d2, M_fa, dir_mao)
+                # gira a mao em torno do proprio eixo ate o polegar ficar para dentro (palma para baixo)
+                t_cur = (M_hd @ (hd.matrix_local.inverted() @ d0.matrix_local)).translation - M_hd.translation
+                t_cur = (t_cur - dir_mao * t_cur.dot(dir_mao)).normalized()
+                t_des = -(lado * .85 - frente * .5) - cima * .25; t_des = (t_des - dir_mao * t_des.dot(dir_mao)).normalized()
+                ang = t_cur.angle(t_des)
+                if t_cur.cross(t_des).dot(dir_mao) < 0: ang = -ang
+                q = Quaternion(dir_mao, ang) @ M_hd.to_quaternion()
+                M_hd = Matrix.Translation(M_hd.translation) @ q.to_matrix().to_4x4()
+                fixar(hd, M_fa, M_hd)
+                p = dir_mao.cross(t_des).normalized()
+                if p.dot(cima) > 0: p = -p                       # lado da palma (para baixo)
+                # indicador desce ao encontro do polegar (pinca); os outros dedos fecham mais, fora do caminho
+                for k, angulos in ((1, (38, 42)), (2, (62, 70)), (3, (66, 72)), (4, (68, 72))):
+                    Mp, soma = M_hd, 0.0
+                    for j, a in enumerate(angulos):
+                        b = osso.get("L Finger%d%s" % (k, "" if j == 0 else str(j)))
+                        filho = osso.get("L Finger%d%d" % (k, j + 1))
+                        if not (b and filho): break
+                        soma += _m.radians(a)
+                        Mp, _ = mira(b, filho, Mp, dir_mao * _m.cos(soma) + p * _m.sin(soma))
+                d01, d02 = osso.get("L Finger01"), osso.get("L Finger02")
+                if d01:                                          # polegar por baixo, apontando para a ponta do indicador
+                    Mp, _ = mira(d0, d01, M_hd, t_des * .35 + dir_mao * .7 + p * .6)
+                    if d02: mira(d01, d02, Mp, dir_mao * .8 - t_des * .35 + p * .45)
+            continue
         if tipo == "maos_na_cabeca":
             # punho apoiado no alto/atras da cabeca (o osso da cabeca nasce na nuca), maos se encontrando no meio
             l1 = (ua.matrix_local.inverted() @ fa.matrix_local).translation.length

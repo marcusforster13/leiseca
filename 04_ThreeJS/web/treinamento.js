@@ -629,13 +629,13 @@ export async function iniciar(ctx) {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
     if (u.acoes?.sentado_entregando) { u.baseAntes = u.base; u.base = 'sentado_entregando'; animar(c, 'sentado_entregando', 1e6, .45); }
-    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status(); curvarDedos(c, true);
+    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status();
     dica('O condutor estendeu os documentos: aponte para o cartão na mão dele e aperte o gatilho (ou clique) para pegar.');
   }
   function pegarDocumentos() {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
-    A.docsPegos = true; docMao.visible = false; curvarDedos(c, false);
+    A.docsPegos = true; docMao.visible = false;
     if (u.baseAntes) { u.base = u.baseAntes; u.baseAntes = null; animar(c, u.base, 1e6, .5); }
     mostrarVista('cnh', conferirCNH);
   }
@@ -645,17 +645,19 @@ export async function iniciar(ctx) {
     if (!u.dedos) { u.dedos = []; m.traverse(o => { if (o.isBone && /Bip01_L_Finger\d+$/.test(o.name)) u.dedos.push({ b: o, base: o.quaternion.clone() }); }); }
     for (const d of u.dedos) { d.b.quaternion.copy(d.base); if (on) d.b.quaternion.multiply(QZ.setFromAxisAngle(EIXO_Z, /Finger0\d?$/.test(d.b.name) ? .3 : -.5)); }
   }
-  function seguirDocumento() {                              // o cartao fica entre os dedos da mao esquerda do condutor
+  function seguirDocumento() {                              // o documento fica em pinca, entre o polegar e o indicador da mao esquerda
     if (!docMao.visible) return;
-    const m = npcs.condutor?.userData.modelo, mao = m?.getObjectByName('Bip01_L_Hand'), ante = m?.getObjectByName('Bip01_L_Forearm');
-    if (!mao || !ante) { docMao.position.set(carro.position.x + BANCO[0] + .2, 1.1, carro.position.z - 1.0); camera.getWorldPosition(DA); docMao.lookAt(DA); return; }
-    mao.getWorldPosition(DM); ante.getWorldPosition(DA);
-    const dir = DA.subVectors(DM, DA).normalize();          // do antebraco para a mao
-    camera.getWorldPosition(DC); DC.sub(DM).normalize();
-    DN.set(0, .8, 0).addScaledVector(DC, .6); DN.addScaledVector(dir, -DN.dot(dir)).normalize();     // face do cartao para cima, inclinada para o agente
+    const m = npcs.condutor?.userData.modelo, mao = m?.getObjectByName('Bip01_L_Hand');
+    const ind = m?.getObjectByName('Bip01_L_Finger12') || m?.getObjectByName('Bip01_L_Finger11'), pol = m?.getObjectByName('Bip01_L_Finger02') || m?.getObjectByName('Bip01_L_Finger01');
+    if (!mao || !ind || !pol) { docMao.position.set(carro.position.x + BANCO[0] + .35, 1.1, carro.position.z - 1.0); camera.getWorldPosition(DA); docMao.lookAt(DA); return; }
+    mao.getWorldPosition(DM); ind.getWorldPosition(DA); pol.getWorldPosition(DC);
+    const dir = DY.copy(DA).add(DC).multiplyScalar(.5).sub(DM).normalize().clone();       // do punho para a pinca
+    DN.subVectors(DA, DC); DN.addScaledVector(dir, -DN.dot(dir));                            // do polegar para o indicador: normal do cartao
+    if (DN.lengthSq() < 1e-6) DN.set(0, 1, 0); DN.normalize();
+    const meioPinca = DA.add(DC).multiplyScalar(.5);
     DY.crossVectors(DN, dir);
     docMao.quaternion.setFromRotationMatrix(DMAT.makeBasis(dir, DY, DN));
-    docMao.position.copy(DM).addScaledVector(dir, .125).addScaledVector(DN, .012);
+    docMao.position.copy(meioPinca).addScaledVector(dir, .05);                              // preso por uma ponta, o resto para a frente
   }
 
   /* ================= fluxo do atendimento ================= */
