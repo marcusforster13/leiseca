@@ -851,6 +851,11 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
                 try: setattr(m, attr, val)
                 except Exception: pass
         if interior: m.use_backface_culling = False
+    for o in novos:                                       # rodas: mesmo prefixo "Modelo_", senao o pipeline refaz a UV e embaralha a textura
+        if o.type == "MESH" and o is not corpo:
+            for s in o.material_slots:
+                if s.material and not s.material.name.startswith("Modelo_"):
+                    m = s.material.copy(); m.name = "Modelo_%s_%s" % (nome, s.material.name.split(".")[0]); s.material = m
     me = corpo.data
     bm = bmesh.new(); bm.from_mesh(me)
     nomes = [s.material.name.lower() for s in corpo.material_slots]

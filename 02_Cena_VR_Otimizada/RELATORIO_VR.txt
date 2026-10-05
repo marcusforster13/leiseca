@@ -1,6 +1,6 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 141669 tris | 24 malhas | 111 slots de material (~draw calls) | 16 luzes
+DEPOIS: 141669 tris | 24 malhas | 117 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
   03_Arvores_Postes                     53276
