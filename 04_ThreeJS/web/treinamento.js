@@ -570,13 +570,20 @@ export async function iniciar(ctx) {
     animar(n, 'sentado', 1e6, 0); seguirCarro(n); scene.add(n);
     return n;
   }
+  // "sentado" = dirigindo, maos no volante; com o carro parado o condutor solta o volante e descansa as maos no colo
+  function poseSentado(n, dirigindo) {
+    const u = n?.userData; if (!u?.assento) return;
+    const parado = u.nervoso && u.acoes?.sentado_nervoso ? 'sentado_nervoso' : u.acoes?.sentado_parado ? 'sentado_parado' : 'sentado';
+    u.base = dirigindo ? 'sentado' : parado; animar(n, u.base, 1e6, .6);
+  }
   function criarNPCs(v) {
     limparNPCs();
     if (v.passageiro !== 'nenhum' && v.modelo === 'condutor_b') v.modelo = 'condutor_a';     // a passageira e sempre a condutor_b
     npcs.condutor = novoNPC(v.modelo, 'Condutor', 1);
     npcs.condutor.userData.embriagado = v.sinais === 'visiveis';
-    if (v.comportamento === 'nervoso') { npcs.condutor.userData.base = 'sentado_nervoso'; animar(npcs.condutor, 'sentado_nervoso', 1e6); }
+    npcs.condutor.userData.nervoso = v.comportamento === 'nervoso';
     if (v.passageiro !== 'nenhum') npcs.passageiro = novoNPC('condutor_b', 'Passageira', -1);
+    if (npcs.passageiro) poseSentado(npcs.passageiro, false);
   }
   const feminino = () => S.variacao.modelo === 'condutor_b';
   const embriagado = () => S.variacao.sinais === 'visiveis';
@@ -745,7 +752,7 @@ export async function iniciar(ctx) {
     window.__som?.tocar('motor_carro_chegando', carro.position.clone().setY(.6));
     if (sinalizou) { registrar('sinalizar_parada'); legenda('Agente', 'Sinal de parada: braço estendido, indicando o ponto de abordagem.', 3); }
     C.vmax = 5; C.frear = true; C.rota = [[PARADA.x, PARADA.z]];
-    C.aoChegar = () => { A.fase = 'parado'; carro.rotation.y = 0; dica('Veículo parado. Aproxime-se pelo lado do motorista (área protegida) e fale com o condutor.'); status(); };
+    C.aoChegar = () => { A.fase = 'parado'; carro.rotation.y = 0; poseSentado(npcs.condutor, false); dica('Veículo parado. Aproxime-se pelo lado do motorista (área protegida) e fale com o condutor.'); status(); };
   }
   function menuCondutor() {
     if (!A || A.fase !== 'parado') return;
@@ -814,7 +821,7 @@ export async function iniciar(ctx) {
   function soprar() {
     const v = S.variacao, r = CEN.etilometro[v.condutor];
     legenda('Etilômetro', 'Soprando… aguarde a leitura.', 3.6);
-    { const c = npcs.condutor; if (c) c.userData.soprando = true; if (c?.userData.assento) animar(c, 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
+    { const c = npcs.condutor; if (c) c.userData.soprando = true; if (c?.userData.assento) animar(c, c.userData.acoes?.sentado_parado ? 'sentado_parado' : 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
     visorTexto('SOPRE'); levarABoca();
     for (const [ms, trecho] of [[750, { ini: .15, dur: 1.9 }], [2150, { ini: .15 }]])       // som do sopro, em dois trechos emendados (~3 s)
       setTimeout(() => { const c = npcs.condutor; if (c?.userData.soprando) window.__som?.tocar('sopro', c.position.clone().setY(1.2), false, trecho); }, ms);
@@ -903,6 +910,7 @@ export async function iniciar(ctx) {
       const tr = window.__transito, t0 = performance.now(); tr?.segurar(true);
       const sair = () => {
         if (tr && !tr.livre() && performance.now() - t0 < 12000) return setTimeout(sair, 300);
+        poseSentado(npcs.condutor, true);
         C.vmax = 6; C.frear = false; C.rota = SAIDA.map(p => [...p]);
         C.aoChegar = () => { carro.visible = false; Object.values(npcs).forEach(n => n.visible = false); tr?.segurar(false); };
       };
@@ -1043,7 +1051,7 @@ export async function iniciar(ctx) {
   };
   function cenaExploracao() {
     S.variacao = derivar({ ...CEN.historia[0].variacao });
-    carro.position.copy(PARADA); carro.rotation.y = 0; carro.visible = true; criarNPCs(S.variacao);
+    carro.position.copy(PARADA); carro.rotation.y = 0; carro.visible = true; criarNPCs(S.variacao); poseSentado(npcs.condutor, false);
   }
   function explorar(ray) {
     const hi = ray.intersectObjects(Object.values(itens).map(i => i.h), false)[0];
@@ -1151,7 +1159,7 @@ export async function iniciar(ctx) {
     apontar, painelAberto: () => paineis.some(p => p.mesh.visible) || docVista.visible,
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, levarABoca, trazerDaBoca, visorTexto, etil: () => naMaoObj, fecharVista, docVista, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, poseSentado, levarABoca, trazerDaBoca, visorTexto, etil: () => naMaoObj, fecharVista, docVista, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;
