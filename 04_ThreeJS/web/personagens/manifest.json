@@ -38,5 +38,40 @@
    "irritado",
    "andando"
   ]
+ },
+ "agente_a": {
+  "arquivo": "personagens/agente_a.glb",
+  "animacoes": [
+   "parada",
+   "falando"
+  ]
+ },
+ "agente_b": {
+  "arquivo": "personagens/agente_b.glb",
+  "animacoes": [
+   "parada",
+   "falando"
+  ]
+ },
+ "agente_c": {
+  "arquivo": "personagens/agente_c.glb",
+  "animacoes": [
+   "parada",
+   "falando"
+  ]
+ },
+ "pm_a": {
+  "arquivo": "personagens/pm_a.glb",
+  "animacoes": [
+   "parada",
+   "falando"
+  ]
+ },
+ "pm_b": {
+  "arquivo": "personagens/pm_b.glb",
+  "animacoes": [
+   "parada",
+   "falando"
+  ]
  }
 }

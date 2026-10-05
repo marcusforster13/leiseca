@@ -322,27 +322,116 @@ for x in (-25, 5, 30):
     cyl("Tampa_Bueiro", .32, .32, .01, (x, -1.75, .004), M["loja"], C_RUA, seg=24)
     box("Boca_de_Lobo", (.9, .12, .1), (x + 6, 6.95, .08), M["preto"], C_RUA)
 
-# ================================================================== 2. PREDIOS (fundo)
-def predio(nome, x0, x1, y_frente, lado, altura, cor, andares):
-    prof = 9.0; w = x1 - x0; yc = y_frente + lado * prof / 2
-    box(nome, (w, prof, altura), ((x0 + x1) / 2, yc, altura / 2 + .15), cor, C_PRED)
-    box(nome + "_Marquise", (w, 1.2, .18), ((x0 + x1) / 2, y_frente - lado * .6, 3.4), M["concreto"], C_PRED)
-    nj = max(2, int(w // 2.6)); passo = w / nj; hand = (altura - 4.2) / andares
-    for a in range(andares):
-        for j in range(nj):
-            r = rnd.random()
-            m = M["janela_on"] if r < .22 else M["janela_on2"] if r < .3 else M["janela_off"]
-            box(nome + "_Janela", (passo * .62, .05, hand * .55), (x0 + passo * (j + .5), y_frente - lado * .03, 4.3 + hand * (a + .5)), m, C_PRED)
-    nl = max(1, int(w // 4.5)); pl = w / nl
-    for j in range(nl):                                    # portas de loja fechadas no terreo
-        box(nome + "_Porta_Loja", (pl * .8, .06, 2.7), (x0 + pl * (j + .5), y_frente - lado * .035, 1.55), M["loja"], C_PRED)
+# ================================================================== 2. PREDIOS (rua comercial carioca: lojas no terreo, apartamentos em cima)
+def tex_porta_enrolar(S=256):
+    """Porta de aco de enrolar: ripas horizontais com sujeira."""
+    y, x = np.mgrid[0:S, 0:S] / S
+    ripa = (y * 12) % 1
+    a = np.ones((S, S, 3)) * np.array(hx("#7b8087"))
+    a *= (.72 + .28 * np.sin(ripa * PI) ** .5)[..., None]
+    a[ripa < .08] *= .45
+    r = np.random.default_rng(9); a *= (1 + .06 * r.standard_normal((S, S, 1)))
+    a *= (1 - .25 * np.clip(y - .75, 0, 1) * 4)[..., None]          # mais sujo embaixo
+    return np.clip(a, 0, 1)
 
-cores = [M["reboco_a"], M["reboco_b"], M["reboco_c"], M["reboco_d"]]
+def tex_pastilha(cor, S=256, n=20):
+    """Revestimento de pastilhas, comum nos predios dos anos 60 e 70."""
+    r = np.random.default_rng(int(sum(cor) * 1000))
+    cel = S // n
+    g = r.uniform(.84, 1.08, (n, n, 1)); a = np.kron(g, np.ones((cel, cel, 1))) * np.array(cor)
+    a = np.pad(a, ((0, S - a.shape[0]), (0, S - a.shape[1]), (0, 0)), mode="edge")
+    yy, xx = np.mgrid[0:S, 0:S]
+    a[(xx % cel == 0) | (yy % cel == 0)] = np.array(hx("#8d8a84"))
+    return np.clip(a, 0, 1)
+
+M.update({
+    "porta_enrolar": img_mat("Porta_Enrolar", np_image("porta_enrolar", tex_porta_enrolar()), 1.0, .45),
+    "pastilha_a": img_mat("Pastilha_Verde", np_image("pastilha_verde", tex_pastilha(hx("#8fa89a"))), .5, .35),
+    "pastilha_b": img_mat("Pastilha_Azul", np_image("pastilha_azul", tex_pastilha(hx("#8a9db5"))), .5, .35),
+    "esquadria": mat("Esquadria_Aluminio", "#3a3d42", .4, .7),
+    "ar_cond": mat("Ar_Condicionado", "#d6d4cc", .5),
+    "vitrine": mat("Vitrine_Acesa", "#40382a", .2, emit="#ffe2b0", forca=2.2),
+    "rodape": mat("Rodape_Granito", "#2e2d2c", .35),
+    "caixa_dagua": mat("Caixa_Dagua", "#3b6fb5", .6),
+    "guarda": mat("Guarda_Corpo_Metal", "#2b2d30", .5, .6),
+    "vidro_var": mat("Vidro_Varanda", "#7fa0a8", .08, alpha=.3),
+    "cortina": mat("Janela_Cortina", "#2a2622", .8, emit="#d9b98a", forca=.45),
+})
+M["texto_letreiro"] = mat("Texto_Letreiro", "#ffffff", .5, emit="#ffffff", forca=1.4)
+LETREIROS = [mat("Letreiro_%d" % i, c, .5, emit=c, forca=.35) for i, c in enumerate(("#b3261e", "#1f5fa8", "#1e7a46", "#d98a12", "#5b2a86", "#222428"))]
+LOJAS = ["FARMÁCIA", "PADARIA", "LANCHONETE", "MERCADINHO", "CHAVEIRO", "PAPELARIA", "ÓTICA", "BAR E PETISCOS", "LOTÉRICA", "CASA DE SUCOS",
+         "BARBEARIA", "ARMARINHO", "AÇOUGUE", "FLORICULTURA", "LAVANDERIA", "SAPATARIA", "HORTIFRUTI", "ASSISTÊNCIA TÉCNICA"]
+rnd.shuffle(LOJAS)
+_loja = [0]
+
+def predio(nome, x0, x1, y_frente, lado, altura, cor, andares, estilo):
+    """estilo: 0 pilastras e janelas simples · 1 varandas de alvenaria · 2 faixas horizontais (modernista) · 3 varandas de vidro"""
+    prof = 9.0; w = x1 - x0; xc = (x0 + x1) / 2; yc = y_frente + lado * prof / 2
+    v = "-y" if lado > 0 else "+y"
+    F = lambda d: y_frente - lado * d                       # d metros para fora da fachada (em direcao a rua)
+    C = C_PRED
+    box(nome, (w, prof, altura), (xc, yc, altura / 2 + .15), cor, C)
+    # ---- terreo comercial
+    box(nome + "_Rodape", (w, .08, .55), (xc, F(.03), .42), M["rodape"], C)
+    nl = max(2, int(w // 4.3)); pl = w / nl
+    for j in range(nl + 1):
+        box(nome + "_Pilar", (.42, .16, 3.35), (min(max(x0 + pl * j, x0 + .21), x1 - .21), F(.07), 1.82), M["concreto"], C)
+    for j in range(nl):
+        x = x0 + pl * (j + .5); lv = pl - .62
+        aberta = False                                         # todas as lojas fechadas (operacao noturna)
+        if aberta:
+            box(nome + "_Vitrine", (lv, .05, 2.55), (x, F(.02), 1.45), M["vitrine"], C)
+            box(nome + "_Vitrine_Caixilho", (lv, .07, .08), (x, F(.04), 2.72), M["esquadria"], C)
+            box(nome + "_Vitrine_Caixilho", (.07, .07, 2.55), (x + lv * .22, F(.04), 1.45), M["esquadria"], C)
+        else:
+            box(nome + "_Porta_Loja", (lv, .06, 3.22), (x, F(.02), 1.78), M["porta_enrolar"], C)
+            box(nome + "_Porta_Loja_Guia", (lv + .1, .1, .16), (x, F(.04), 3.44), M["esquadria"], C)
+    box(nome + "_Marquise", (w, 1.35, .16), (xc, F(.67), 3.66), M["concreto"], C)
+    box(nome + "_Marquise_Testeira", (w, .06, .3), (xc, F(1.33), 3.6), M["concreto"], C)
+    # ---- andares
+    hand = (altura - 4.2) / andares; nj = max(2, int(w // 2.7)); passo = w / nj
+    varanda = estilo in (1, 3)
+    for a in range(andares):
+        z0 = 4.35 + hand * a
+        if estilo == 2:
+            box(nome + "_Faixa_Peitoril", (w, .1, hand * .3), (xc, F(.04), z0 + hand * .14), M["concreto"], C)
+        for j in range(nj):
+            x = x0 + passo * (j + .5); r = rnd.random()
+            m = M["janela_on"] if r < .17 else M["janela_on2"] if r < .23 else M["cortina"] if r < .34 else M["janela_off"]
+            jw = passo * (.72 if estilo == 2 else .56); jh = hand * (.46 if estilo == 2 else .5); zc = z0 + hand * .56
+            box(nome + "_Moldura", (jw + .14, .1, jh + .14), (x, F(.03), zc), M["esquadria"], C)
+            box(nome + "_Janela", (jw, .03, jh), (x, F(.075), zc), m, C)
+            box(nome + "_Janela_Montante", (.05, .04, jh), (x, F(.085), zc), M["esquadria"], C)
+            if not varanda:
+                box(nome + "_Peitoril", (jw + .3, .2, .07), (x, F(.1), zc - jh / 2 - .1), M["concreto"], C)
+                if rnd.random() < .28:
+                    box(nome + "_Ar_Cond", (.66, .42, .42), (x + rnd.uniform(-.2, .2) * jw, F(.2), zc - jh / 2 - .38), M["ar_cond"], C, bevel=.02)
+                    box(nome + "_Ar_Cond_Grade", (.56, .02, .3), (x, F(.415), zc - jh / 2 - .38), M["esquadria"], C)
+        if varanda:
+            box(nome + "_Varanda_Laje", (w - .5, 1.05, .12), (xc, F(.52), z0 + .02), M["concreto"], C)
+            if estilo == 1:
+                box(nome + "_Varanda_Mureta", (w - .5, .1, .95), (xc, F(1.0), z0 + .55), cor, C)
+            else:
+                box(nome + "_Varanda_Vidro", (w - .5, .02, .85), (xc, F(1.02), z0 + .5), M["vidro_var"], C)
+                box(nome + "_Varanda_Guarda", (w - .5, .05, .05), (xc, F(1.02), z0 + .97), M["guarda"], C)
+            for k in range(1, nj):                               # divisorias entre os apartamentos
+                box(nome + "_Varanda_Divisoria", (.08, 1.0, hand - .15), (x0 + passo * k, F(.5), z0 + hand / 2), cor, C)
+    if estilo == 0:                                              # pilastras marcando a fachada
+        for k in range(0, nj + 1, 2):
+            box(nome + "_Pilastra", (.3, .12, altura - 4.2), (min(max(x0 + passo * k, x0 + .15), x1 - .15), F(.05), 4.2 + (altura - 4.2) / 2 + .15), M["concreto"], C)
+    # ---- topo: cornija, platibanda, caixa d'agua e casa de maquinas
+    box(nome + "_Cornija", (w + .1, .4, .22), (xc, F(.1), altura + .15), M["concreto"], C)
+    box(nome + "_Platibanda", (w, .2, .7), (xc, F(-.1), altura + .5), cor, C)
+    cx = xc + rnd.uniform(-.25, .25) * w
+    box(nome + "_Casa_Maquinas", (3.0, 3.0, 2.2), (cx, yc, altura + 1.25), M["concreto"], C)
+    cyl(nome + "_Caixa_Dagua", .85, .85, 1.3, (cx + rnd.choice((-2.6, 2.6)), yc + .5, altura + .8), M["caixa_dagua"], C, seg=14)
+
+cores = [M["reboco_a"], M["pastilha_a"], M["reboco_c"], M["reboco_d"], M["reboco_b"], M["pastilha_b"]]
 for lado, yf in ((1, 12.0), (-1, -11.0)):
     x = -RUA_X; i = 0
     while x < RUA_X - 1:
-        w = min(rnd.choice((12, 15, 18, 21)), RUA_X - x); and_ = rnd.choice((3, 4, 5, 6))
-        predio("Predio_%s_%d" % ("N" if lado > 0 else "S", i), x + .15, x + w - .15, yf, lado, 4.2 + and_ * 3.0, cores[(i + (lado > 0)) % 4], and_)
+        w = min(rnd.choice((12, 15, 18, 21)), RUA_X - x); and_ = rnd.choice((3, 4, 5, 6, 7))
+        predio("Predio_%s_%d" % ("N" if lado > 0 else "S", i), x + .15, x + w - .15, yf, lado, 4.2 + and_ * 3.0, cores[(i * 5 + (lado > 0) * 2) % 6], and_, (i + (lado < 0)) % 4)
         x += w; i += 1
 
 # ================================================================== 3. ARVORES E POSTES

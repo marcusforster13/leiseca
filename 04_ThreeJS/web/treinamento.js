@@ -490,10 +490,37 @@ export async function iniciar(ctx) {
   const feminino = () => S.variacao.modelo === 'condutor_b';
   const vozC = () => feminino() ? 'f' : 'm';
   // falas do agente e do condutor no genero certo
-  const T = t => !feminino() ? t : t.replace(/\bo senhor\b/g, 'a senhora').replace(/\bO senhor\b/g, 'A senhora').replace(/\bpreso\b/g, 'presa').replace(/\bObrigado\b/g, 'Obrigada');
+  const T = t => !feminino() ? t : t.replace(/\bo senhor\b/g, 'a senhora').replace(/\bO senhor\b/g, 'A senhora').replace(/\bpreso\b/g, 'presa');
+  const TC = t => feminino() ? t.replace(/\bObrigado\b/g, 'Obrigada') : t;      // falas do proprio condutor
   function condFala(texto) {
     const c = npcs.condutor; if (!c) return Promise.resolve();
-    return dizer(c, 'Condutor', { texto: T(texto), gesto: c.userData.assento ? 'sentado_falando' : 'falando' }, vozC());
+    return dizer(c, 'Condutor', { texto: TC(texto), gesto: c.userData.assento ? 'sentado_falando' : 'falando' }, vozC());
+  }
+
+  /* ================= equipe da operacao (figurantes): agentes de colete e policiais ================= */
+  const figurantes = {};
+  const FIGURANTES = [   // papel, nome, x, z (cena web), giro, fala ao clicar
+    ['agente_a', 'Agente', -19.4, -3.25, -Math.PI / 2, 'Eu seleciono os veículos e mando para a faixa de abordagem. Daqui para a frente é com você.', 'm'],
+    ['agente_b', 'Agente', -9.2, -4.55, .3, 'Aqui na tenda a gente consulta os documentos e imprime os autos. Precisando, é só chamar.', 'f'],
+    ['agente_c', 'Agente', 9.5, -3.75, 1.9, 'Esta é a área de regularização: o veículo fica aqui até aparecer um condutor habilitado e em condições.', 'm'],
+    ['pm_a', 'Policial', 11.6, -3.7, .25, 'Estamos na segurança da operação. Havendo crime de trânsito, a condução à delegacia é com a gente.', 'm'],
+    ['pm_b', 'Policial', 12.5, -4.0, -.35, 'Tudo tranquilo por aqui. Qualquer alteração com condutor, é só sinalizar.', 'm'],
+  ];
+  function criarFigurantes() {
+    for (const [papel, nome, x, z, giro, fala, voz] of FIGURANTES) {
+      if (figurantes[papel] || !modelos[papel]) continue;
+      const n = personagem(papel, nome, 0x3d4045, papel === 'agente_b' ? 1.68 : 1.8);
+      n.userData.modelo?.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(m => ctx.iluminar(m.clone())) : ctx.iluminar(o.material.clone()); });
+      Object.assign(n.userData, { fig: papel, falaFig: fala, vozFig: voz, giroBase: giro });
+      n.position.set(x, 0, z); n.rotation.y = giro; scene.add(n); figurantes[papel] = n;
+    }
+  }
+  function cliqueFigurante(ray) {
+    const h = ray.intersectObjects(Object.values(figurantes).map(n => n.userData.hit), false)[0];
+    if (!h || h.distance > 5) return false;
+    const n = Object.values(figurantes).find(f => f.userData.hit === h.object); if (!n) return false;
+    dizer(n, n.userData.nome, { texto: n.userData.falaFig, gesto: 'falando' }, n.userData.vozFig);
+    return true;
   }
 
   /* ================= paineis de opcoes ================= */
@@ -824,6 +851,7 @@ export async function iniciar(ctx) {
     if (hi && hi.distance < 4) { legenda('Equipamento', INFO_ITEM[hi.object.userData.item], 6); return true; }
     const hn = ray.intersectObjects(Object.values(npcs).map(n => n.userData.hit), false)[0];
     if (hn && hn.distance < 6) { condFala('Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo.'); return true; }
+    if (cliqueFigurante(ray)) return true;
     return false;
   }
 
@@ -841,6 +869,7 @@ export async function iniciar(ctx) {
       return true;
     }
     if (hc && hc.distance < 4.5 && A?.fase === 'parado') { menuCondutor(); return true; }
+    if (cliqueFigurante(ray)) return true;
     return false;
   }
   function usarItem(k) {
@@ -886,7 +915,7 @@ export async function iniciar(ctx) {
     if (agora > legAte) { leg.visible = false; const hl = document.getElementById('legendaHTML'); if (hl && !hl.hidden) hl.hidden = true; }
     moverCarro(dt);
     camera.getWorldPosition(V); camera.getWorldDirection(V2);
-    for (const n of Object.values(npcs)) {
+    for (const n of [...Object.values(npcs), ...Object.values(figurantes)]) {
       const u = n.userData;
       seguirCarro(n);
       u.mixer?.update(dt);
@@ -897,7 +926,7 @@ export async function iniciar(ctx) {
       if (u.real && !u.assento && !u.destino && !u.semVirar && V.distanceTo(n.position) < 3.5) {     // vira o corpo para o agente
         let d = Math.atan2(V.x - n.position.x, V.z - n.position.z) - n.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
         n.rotation.y += d * Math.min(1, dt * 2.5);
-      }
+      } else if (u.fig && !u.fala) { let d = u.giroBase - n.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); n.rotation.y += d * Math.min(1, dt * 1.2); }
     }
     if (S.ativo && Math.floor(agora / 1000) !== Math.floor((agora - dt * 1000) / 1000)) status();
   }
@@ -910,14 +939,14 @@ export async function iniciar(ctx) {
   });
   const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = 'Iniciar treinamento'; bt.id = 'bTrein';
   bt.onclick = aviso; document.getElementById('acoes')?.prepend(bt);
-  modelosProntos.then(() => { if (!S.ativo) cenaExploracao(); });
+  modelosProntos.then(() => { criarFigurantes(); if (!S.ativo) cenaExploracao(); });
 
   window.__trein = {
     clique: ray => usar(ray), gatilho: ray => usar(ray),
     apontar, painelAberto: () => paineis.some(p => p.mesh.visible),
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;
