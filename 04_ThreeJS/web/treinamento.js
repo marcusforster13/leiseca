@@ -406,7 +406,7 @@ export async function iniciar(ctx) {
       return;
     }
     V.multiplyScalar(1 / L); carro.position.addScaledVector(V, passo);
-    for (const r of rodas) r.rotation.z -= passo / .3;
+    for (const r of rodas) r.rotation.z -= passo / .325;
     let d = Math.atan2(-V.z, V.x) - carro.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
     carro.rotation.y += d * Math.min(1, dt * 3);
   }

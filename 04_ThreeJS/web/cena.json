@@ -1,18 +1,18 @@
 {
- "gerado_em": "2026-10-05 14:49",
+ "gerado_em": "2026-10-05 16:09",
  "qualidade": "padrao",
  "lightmaps": {
   "01_Rua_Estatico": {
    "lm": "lightmaps/LM_01_Rua.png",
-   "max": 1.17183
+   "max": 1.16749
   },
   "02_Predios_Estatico": {
    "lm": "lightmaps/LM_02_Predios.png",
-   "max": 0.55457
+   "max": 0.55486
   },
   "03_Arvores_Postes_Estatico": {
    "lm": "lightmaps/LM_03_Arvores_Postes.png",
-   "max": 0.33953
+   "max": 0.34141
   },
   "04_Blitz_Estrutura_Estatico": {
    "lm": "lightmaps/LM_04_Blitz_Estrutura.png",
@@ -20,39 +20,39 @@
   },
   "05_Cones_Barreiras_Estatico": {
    "lm": "lightmaps/LM_05_Cones_Barreiras.png",
-   "max": 0.93393
+   "max": 0.93366
   },
   "06_Veiculos_Apoio_Estatico": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_1": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_2": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_3": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_4": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_5": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "Giroflex_Lente_6": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.72342
+   "max": 0.70526
   },
   "07_Carro_Regularizacao_Estatico": {
    "lm": "lightmaps/LM_07_Carro_Regularizacao.png",
-   "max": 2.0936
+   "max": 2.25073
   }
  },
  "lightmap_ganho": 3.14159,
@@ -136,19 +136,19 @@
  "giroflex": {
   "vermelho": [
    9.35,
-   1.61,
+   1.7204,
    -5.1
   ],
   "azul": [
    9.35,
-   1.61,
+   1.7204,
    -5.8
   ]
  },
  "banco": [
-  -0.2575884389877319,
-  0.39180789291858675,
-  0.5138195085525513
+  -0.26379552513360977,
+  0.42315253615379333,
+  0.600525074005127
  ],
  "luz_dinamica": 1.6,
  "guincho_luz": [

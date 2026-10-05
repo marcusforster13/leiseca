@@ -821,7 +821,7 @@ def repintar(img, cor, nome):
     novo = bpy.data.images.new(nome, w, h, alpha=True); novo.pixels.foreach_set(px.ravel()); novo.pack()
     return novo
 
-def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False, porta=None):
+def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False, porta=None, escala=1.0):
     """Importa modelos/carros/<arquivo>.glb com a frente para +X. Devolve (raiz, sup_y, sup_x, info) ou None se faltar."""
     caminho = os.path.join(CARROS, arquivo + ".glb")
     if not os.path.exists(caminho): return None
@@ -833,6 +833,10 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
         for c in list(o.users_collection): c.objects.unlink(o)
         col.objects.link(o)
         if o is not R: o.name = nome + "_" + o.name.split(".")[0].replace("Roda_", "Roda_")
+    if escala != 1.0:
+        for o in novos:
+            if o.type == "MESH":
+                o.data.transform(Matrix.Scale(escala, 4)); o.location = o.location * escala
     corpo = next(o for o in novos if o.type == "MESH" and "Carroceria" in o.name)
     feitos = {}
     for i, s in enumerate(corpo.material_slots):          # materiais proprios deste carro (UV do modelo e preservada no pipeline)
@@ -932,16 +936,16 @@ def faixa_lateral(nome, R, col, sup_y, x0, x1, z0, z1, m, n=24):
         malha(nome, vs, fs, m, col, R)
 
 # ---- viatura da Policia Militar (apoio a seguranca): perua repintada de branco, faixa azul, giroflex
-r = carro_modelo("Viatura_PM", C_VEIC, "perua", (9.6, 5.45, 0), 0, cor="#eceded")
+r = carro_modelo("Viatura_PM", C_VEIC, "perua", (9.6, 5.45, 0), 0, cor="#eceded", escala=1.08)
 if r:
     VTR, sy_, sx_, inf = r
     giroflex(VTR, C_VEIC, -.25, inf["alt"] + .03, larg=1.05)
-    faixa_lateral("Viatura_Faixa_Azul", VTR, C_VEIC, sy_, -1.85, 1.55, .5, .66, M["faixa_pm"])
+    faixa_lateral("Viatura_Faixa_Azul", VTR, C_VEIC, sy_, -2.0, 1.68, .54, .71, M["faixa_pm"])
     for lado in (1, -1):
         v = "+y" if lado > 0 else "-y"
-        texto("Adesivo_Policia_Militar", "POLÍCIA MILITAR", .085, (-.15, sy_(-.15, .82, lado) + lado * .008, .82), v, M["texto_az"], C_VEIC, VTR)
-        texto("Adesivo_190", "190", .12, (-1.55, sy_(-1.55, .84, lado) + lado * .008, .84), v, M["texto_az"], C_VEIC, VTR)
-        cyl("Brasao_Imagem", .09, .09, .004, (.95, sy_(.95, .82, lado) + lado * .006, .82), M["brasao"], C_VEIC, VTR, rot=(PI / 2, 0, 0), seg=28)
+        texto("Adesivo_Policia_Militar", "POLÍCIA MILITAR", .085, (-.15, sy_(-.15, .89, lado) + lado * .008, .89), v, M["texto_az"], C_VEIC, VTR)
+        texto("Adesivo_190", "190", .12, (-1.67, sy_(-1.67, .91, lado) + lado * .008, .91), v, M["texto_az"], C_VEIC, VTR)
+        cyl("Brasao_Imagem", .09, .09, .004, (1.03, sy_(1.03, .89, lado) + lado * .006, .89), M["brasao"], C_VEIC, VTR, rot=(PI / 2, 0, 0), seg=28)
 else:
     VTR, sy_, sx_, _ = veiculo("Viatura_PM", C_VEIC, (9.6, 5.45, 0), 0, EST_SUV, M["pint_pm"], M["faixa_pm"], "suv", placa="RJP0M19")
     giroflex(VTR, C_VEIC, -.25, 1.72)
@@ -967,12 +971,12 @@ else:
     guincho((20.2, 5.4, 0))
 
 # ---- carro abordado (para no ponto de abordagem; janela do motorista aberta) e carro na regularizacao
-r = carro_modelo("Carro_Abordado", C_ABORD, "hatch", (-7.0, 1.9, 0), 0, cor="#9a9da3", janela_aberta=True, interior=True, porta=(1.1, .2, .3))
+r = carro_modelo("Carro_Abordado", C_ABORD, "hatch", (-7.0, 1.9, 0), 0, cor="#9a9da3", janela_aberta=True, interior=True, porta=(1.1, .2, .3), escala=1.08)
 if r:
     ABORD = r[0]; ABORD["banco"] = r[3].get("banco", [.1, .36, .35])
 else:
     ABORD, _, _, corpo_ab = veiculo("Carro_Abordado", C_ABORD, (-7.0, 1.9, 0), 0, EST_HATCH, M["pint_cinza"], None, "hatch", janela_aberta=True, placa="KXR3B47")
-if not carro_modelo("Carro_Regularizacao", C_REG, "seda", (13.2, 1.75, 0), .04, cor="#e9e9e6"):
+if not carro_modelo("Carro_Regularizacao", C_REG, "seda", (13.2, 1.75, 0), .04, cor="#e9e9e6", escala=1.09):
     veiculo("Carro_Regularizacao", C_REG, (13.2, 1.75, 0), .04, EST_HATCH, M["pint_branca"], None, "hatch", placa="LTM8F02")
 
 # ================================================================== 7. EQUIPAMENTOS (interativos)

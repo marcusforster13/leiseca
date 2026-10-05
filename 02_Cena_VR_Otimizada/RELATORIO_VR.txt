@@ -1,6 +1,6 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 141669 tris | 24 malhas | 117 slots de material (~draw calls) | 16 luzes
+DEPOIS: 141621 tris | 24 malhas | 117 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
   03_Arvores_Postes                     53276
@@ -8,7 +8,7 @@ Triangulos por colecao:
   06_Veiculos_Apoio                     22832
   05_Cones_Barreiras                    12620
   04_Blitz_Estrutura                     9024
-  10_Carro_Abordado                      8122
+  10_Carro_Abordado                      8074
   07_Carro_Regularizacao                 7122
   08_Interativos                         1496
   01_Rua                                 1357
