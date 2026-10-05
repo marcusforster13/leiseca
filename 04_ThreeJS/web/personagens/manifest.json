@@ -8,6 +8,7 @@
    "sentado",
    "sentado_falando",
    "sentado_nervoso",
+   "sentado_entregando",
    "soprando",
    "irritado",
    "andando"
@@ -22,6 +23,7 @@
    "sentado",
    "sentado_falando",
    "sentado_nervoso",
+   "sentado_entregando",
    "soprando",
    "andando"
   ]
@@ -35,6 +37,7 @@
    "sentado",
    "sentado_falando",
    "sentado_nervoso",
+   "sentado_entregando",
    "soprando",
    "irritado",
    "andando"

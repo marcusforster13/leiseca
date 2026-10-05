@@ -173,7 +173,7 @@ export async function iniciar(ctx) {
   function vozSintetica(texto, voz = 'f') {
     if (S.voz === false || !('speechSynthesis' in window)) return null;
     const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').startsWith('pt'));
-    if (!vs.length) return null;
+    if (!vs.length) { if (!S.avisoVoz) { S.avisoVoz = true; console.warn('Sem voz sintética em português neste navegador: só legendas.'); } return null; }
     try {
       const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR';
       const br = vs.filter(v => /BR/i.test(v.lang)), lista = br.length ? br : vs;
@@ -573,6 +573,65 @@ export async function iniciar(ctx) {
     } })), { label: 'Voltar', acao: fechar }] });
   }
 
+  /* ================= documentos: o condutor estende a mao pela janela e o agente pega ================= */
+  // dados ficticios, coerentes com a variacao sorteada (os mesmos que o tablet mostra)
+  function dadosDocs() {
+    const v = S.variacao, hoje = new Date(), val = new Date(hoje), emi = new Date(hoje);
+    val.setMonth(val.getMonth() + (v.documentos === 'cnh_vencida' ? -4 : 26)); emi.setFullYear(val.getFullYear() - 10);
+    const ano = hoje.getFullYear(), atras = v.documentos === 'licenciamento_atrasado';
+    return { nome: CEN.documentos.nomes[v.modelo], hoje, val, emi, exercicio: atras ? ano - 2 : ano, atras };
+  }
+  const dcv = document.createElement('canvas'); dcv.width = 860; dcv.height = 540;
+  const dtex = new THREE.CanvasTexture(dcv); dtex.colorSpace = THREE.SRGBColorSpace;
+  function desenharDoc(tipo) {
+    const g = dcv.getContext('2d'), d = dadosDocs(), W = 860, H = 540, cnh = tipo === 'cnh';
+    g.fillStyle = cnh ? '#e9efe6' : '#eef0f4'; g.beginPath(); g.roundRect(0, 0, W, H, 28); g.fill();
+    g.fillStyle = cnh ? '#2f6b4a' : '#27457a'; g.beginPath(); g.roundRect(0, 0, W, 96, [28, 28, 0, 0]); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 38px Segoe UI, sans-serif'; g.fillText(cnh ? 'CARTEIRA NACIONAL DE HABILITAÇÃO' : 'DOCUMENTO DO VEÍCULO · CRLV-e', 30, 50);
+    g.font = '500 20px Segoe UI, sans-serif'; g.fillText('MODELO DE TREINAMENTO · sem valor legal', 30, 80);
+    const campo = (rot, val, x, y, larg = 0) => { g.fillStyle = '#5b6470'; g.font = '500 19px Segoe UI, sans-serif'; g.fillText(rot, x, y);
+      g.fillStyle = '#12161c'; g.font = '700 34px Segoe UI, sans-serif'; g.fillText(val, x, y + 38, larg || undefined); };
+    if (cnh) {
+      g.fillStyle = '#c9d2c6'; g.beginPath(); g.roundRect(30, 124, 200, 250, 10); g.fill();          // lugar da foto
+      g.fillStyle = '#8d9a8b'; g.beginPath(); g.arc(130, 215, 52, 0, 7); g.fill(); g.beginPath(); g.ellipse(130, 345, 86, 70, 0, Math.PI, 0); g.fill();
+      campo('NOME', d.nome, 260, 150, 570); campo('CATEGORIA', 'B', 260, 250); campo('1ª HABILITAÇÃO', dataBR(d.emi), 430, 250);
+      campo('VALIDADE', dataBR(d.val), 260, 350); campo('REGISTRO', '0' + (41700000000 + d.nome.length * 7919), 30, 430);
+    } else {
+      campo('PLACA', 'KXR3B47', 30, 150); campo('MARCA / MODELO', 'HATCH 1.0', 300, 150); campo('COR', 'PRATA', 620, 150);
+      campo('PROPRIETÁRIO', d.nome, 30, 250, 800); campo('EXERCÍCIO DO LICENCIAMENTO', String(d.exercicio), 30, 350); campo('RESTRIÇÕES', 'NENHUMA', 480, 350);
+    }
+    g.fillStyle = '#5b6470'; g.font = '500 19px Segoe UI, sans-serif'; g.fillText('DATA DE HOJE: ' + dataBR(d.hoje), 30, 510);
+    dtex.needsUpdate = true;
+  }
+  const matDoc = new THREE.MeshBasicMaterial({ map: dtex, side: THREE.DoubleSide, toneMapped: false, fog: false });
+  // cartao na mao do condutor (pequeno, com area de clique maior) e o mesmo cartao na mao do agente (grande, para ler)
+  const docMao = new THREE.Mesh(new THREE.PlaneGeometry(.125, .078), matDoc); docMao.visible = false; scene.add(docMao);
+  const docHit = new THREE.Mesh(new THREE.SphereGeometry(.2, 10, 8), new THREE.MeshBasicMaterial({ visible: false })); docMao.add(docHit);
+  const docCam = new THREE.Mesh(new THREE.PlaneGeometry(.27, .17), matDoc.clone()); docCam.material.depthTest = false; docCam.renderOrder = 998;
+  docCam.position.set(-.36, -.07, -.55); docCam.rotation.set(-.12, .5, 0);      // a esquerda do painel de opcoes docCam.visible = false; camera.add(docCam);
+  const DM = new THREE.Vector3(), DA = new THREE.Vector3();
+  function oferecerDocumentos() {
+    if (!A || A.docsPegos) return;
+    const c = npcs.condutor, u = c.userData;
+    if (u.acoes?.sentado_entregando) { u.baseAntes = u.base; u.base = 'sentado_entregando'; animar(c, 'sentado_entregando', 1e6, .45); }
+    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status();
+    dica('O condutor estendeu os documentos: aponte para o cartão na mão dele e aperte o gatilho (ou clique) para pegar.');
+  }
+  function pegarDocumentos() {
+    if (!A || A.docsPegos) return;
+    const c = npcs.condutor, u = c.userData;
+    A.docsPegos = true; docMao.visible = false;
+    if (u.baseAntes) { u.base = u.baseAntes; u.baseAntes = null; animar(c, u.base, 1e6, .5); }
+    conferirCNH();
+  }
+  function seguirDocumento() {                              // o cartao acompanha a mao esquerda do condutor
+    if (!docMao.visible) return;
+    const m = npcs.condutor?.userData.modelo, mao = m?.getObjectByName('Bip01_L_Hand'), ante = m?.getObjectByName('Bip01_L_Forearm');
+    if (!mao) { docMao.position.set(carro.position.x + BANCO[0] + .2, 1.02, carro.position.z - .98); }
+    else { mao.getWorldPosition(DM); ante?.getWorldPosition(DA); docMao.position.copy(DM).addScaledVector(DA.subVectors(DM, DA).normalize(), .1); docMao.position.y += .02; }
+    camera.getWorldPosition(DA); docMao.lookAt(DA);
+  }
+
   /* ================= fluxo do atendimento ================= */
   function novoAtendimento(v, cap) {
     S.variacao = v; S.feitos = new Map();
@@ -580,6 +639,7 @@ export async function iniciar(ctx) {
     criarNPCs(v);
     window.__transito?.segurar(false);
     if (porta) porta.rotation.y = 0;
+    docMao.visible = false; docCam.visible = false;
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
     const abrir = () => {
@@ -610,8 +670,8 @@ export async function iniciar(ctx) {
     if (!A.abriu) return painelOpc('Condutor', 'Primeiro contato', D.abertura, () => { A.abriu = true; condFala(D.resposta_abertura[v.comportamento]); });
     const ops = [];
     if (!A.motor) ops.push({ label: D.motor.fala, acao: () => { A.motor = true; registrar('pedir_desligar'); fechar(); condFala(D.motor.resposta); } });
-    if (!A.docs) ops.push({ label: D.documentos.fala, acao: () => { A.docs = true; registrar('pedir_documentos'); fechar(); condFala(D.documentos.resposta).then(() => dica('Documentos na mão. Fale de novo com o condutor para conferir no tablet.')); } });
-    if (A.docs && !A.cnhOk) ops.push({ label: 'Conferir a habilitação no tablet', acao: conferirCNH });
+    if (!A.docs) ops.push({ label: D.documentos.fala, acao: () => { A.docs = true; registrar('pedir_documentos'); fechar(); condFala(D.documentos.resposta).then(oferecerDocumentos); } });
+    if (A.docs && !A.cnhOk) ops.push(A.docsPegos ? { label: 'Conferir a habilitação', acao: conferirCNH } : { label: 'Pegar os documentos e conferir a habilitação', acao: () => { fechar(); pegarDocumentos(); } });
     if (A.docs && A.cnhOk && !A.crlvOk) ops.push({ label: 'Conferir o documento do veículo no tablet', acao: conferirCRLV });
     if (!A.sinais) ops.push({ label: 'Observar o condutor: fala, olhos, hálito, movimentos', acao: observar });
     if (!A.convite) ops.push({ label: 'Oferecer o teste do etilômetro', acao: convidar });
@@ -626,6 +686,7 @@ export async function iniciar(ctx) {
   }
   const dataBR = d => d.toLocaleDateString('pt-BR');
   function conferirCNH() {
+    A.docsPegos = true; docMao.visible = false; desenharDoc('cnh'); docCam.visible = true;
     const v = S.variacao, hoje = new Date(), val = new Date(hoje);
     val.setMonth(val.getMonth() + (v.documentos === 'cnh_vencida' ? -4 : 26));
     const certo = v.documentos === 'cnh_vencida' ? 'vencida_30' : 'regular';
@@ -636,9 +697,11 @@ export async function iniciar(ctx) {
     }, `Nome: ${CEN.documentos.nomes[v.modelo]}\nCategoria: B\nValidade: ${dataBR(val)}\nData de hoje: ${dataBR(hoje)}`);
   }
   function conferirCRLV() {
+    desenharDoc('crlv'); docCam.visible = true;
     const v = S.variacao, ano = new Date().getFullYear(), atras = v.documentos === 'licenciamento_atrasado', certo = atras ? 'atrasado' : 'regular';
     painelOpc('Tablet · veículo', 'Documento do veículo (CRLV-e)', CEN.documentos.crlv, op => {
       A.crlvOk = true;
+      docCam.visible = false; setTimeout(() => dica('Documentos devolvidos ao condutor.'), 600);
       if (op.id === certo) registrar('conferir_crlv'); else { registrar('consulta_errada', 'CRLV: ' + op.id); if (S.modo === 'treino') legenda('Instrutor', 'Confira o exercício do licenciamento: ' + CEN.documentos.crlv.find(o => o.id === certo).fala + '.', 6); }
     }, `Placa: KXR3B47 · hatch cinza\nÚltimo licenciamento: exercício ${atras ? ano - 2 : ano}\nRestrições: nenhuma`);
   }
@@ -832,6 +895,7 @@ export async function iniciar(ctx) {
   }
   function encerrar() {
     if (!S.ativo) return;
+    docMao.visible = false; docCam.visible = false;
     if (A) {                                                // atendimento interrompido: conta o que foi feito
       if (A.fase === 'parado' && S.variacao.alcool === 'sim' && A.decidiu && !A.veiculoOk) penalidade(-6, 'Atendimento encerrado sem definir o destino do veículo', 'Com infração por álcool ou recusa, o veículo fica retido até a apresentação de condutor habilitado.');
       clearTimeout(A.tAuto); HIST.push(resumo()); A = null;
@@ -907,6 +971,7 @@ export async function iniciar(ctx) {
     const hc = carro.visible ? ray.intersectObject(carro, true)[0] : null;
     if (hi && hi.distance < 3.5 && (!hn || hi.distance < hn.distance)) { usarItem(hi.object.userData.item); return true; }
     if (A?.fase === 'chegando' && hc && hc.distance < 60) { entrar(true); return true; }
+    if (docMao.visible) { const hd = ray.intersectObject(docHit, false)[0]; if (hd && hd.distance < 4) { pegarDocumentos(); return true; } }
     if (hn && hn.distance < 4.5) {
       if (hn.object.userData.npc === 'Condutor') menuCondutor(); else legenda('Passageira', 'Boa noite.', 2.5);
       return true;
@@ -931,7 +996,7 @@ export async function iniciar(ctx) {
     else if (!A.abriu) L.push('Vá até o lado do motorista e cumprimente o condutor');
     else {
       if (!A.motor) L.push('Peça para desligar o motor');
-      if (!A.docs) L.push('Peça a habilitação e o documento do veículo'); else if (!A.crlvOk) L.push('Confira os documentos no tablet');
+      if (!A.docs) L.push('Peça a habilitação e o documento do veículo'); else if (!A.docsPegos) L.push('Pegue os documentos da mão do condutor'); else if (!A.crlvOk) L.push('Confira a habilitação e o documento do veículo');
       if (!A.sinais) L.push('Observe os sinais do condutor');
       if (!A.convite) L.push('Ofereça o teste do etilômetro');
       else if (A.recusou && !A.infRecusa) L.push('Informe a consequência da recusa (art. 165-A)');
@@ -957,6 +1022,7 @@ export async function iniciar(ctx) {
     const agora = performance.now(), dt = Math.min(.1, (agora - ultimo) / 1000); ultimo = agora;
     if (agora > legAte) { leg.visible = false; const hl = document.getElementById('legendaHTML'); if (hl && !hl.hidden) hl.hidden = true; }
     moverCarro(dt);
+    seguirDocumento();
     camera.getWorldPosition(V); camera.getWorldDirection(V2);
     for (const n of [...Object.values(npcs), ...Object.values(figurantes)]) {
       const u = n.userData;
@@ -989,7 +1055,7 @@ export async function iniciar(ctx) {
     apontar, painelAberto: () => paineis.some(p => p.mesh.visible),
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;

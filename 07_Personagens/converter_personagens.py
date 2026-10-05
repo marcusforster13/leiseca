@@ -24,7 +24,7 @@ def _anims(s):
     fala = "m_gestic_talk_neutral_01" if s == "m" else "f_gestic_talk_nervous_01"
     return {"parada": s + "_idle_neutral_01", "falando": fala, "nervoso": s + "_idle_nervous_01",
             "sentado": s + "_idle_neutral_01+sentado", "sentado_falando": fala + "+sentado_pernas",
-            "sentado_nervoso": s + "_idle_nervous_01+sentado", "soprando": s + "_idle_neutral_01+soprando"}
+            "sentado_nervoso": s + "_idle_nervous_01+sentado", "sentado_entregando": s + "_idle_neutral_01+sentado_entrega", "soprando": s + "_idle_neutral_01+soprando"}
 PAPEIS = {
     "condutor_a": ("Male_Adult_01", {**_anims("m"), "irritado": "m_idle_angry_01", "andando": "m_walk_fast_01"}),
     "condutor_b": ("Female_Adult_08", {**_anims("f"), "andando": "m_walk_fast_01"}),
@@ -137,7 +137,9 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
             dir_braco = lado * .88 + cima * .3 - frente * .22
         elif tipo == "maos_nas_costas":
             dir_braco = -cima * .85 - frente * .42 + lado * .14
-        elif tipo == "sentado":                          # maos no volante
+        elif tipo == "sentado_entrega" and sgn < 0:      # braco esquerdo para fora da janela, entregando o documento
+            dir_braco = lado * .8 + frente * .42 - cima * .3
+        elif tipo in ("sentado", "sentado_entrega"):                          # maos no volante
             dir_braco = -cima * .5 + frente * .8 + lado * .12
         elif tipo == "soprando":                         # em pe, uma mao perto da boca (segurando o bocal)
             dir_braco = (-cima * .75 + frente * .55 + lado * .2) if sgn > 0 else (-cima * 1.0 + lado * .12)
@@ -149,7 +151,9 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
             dir_ante = cabeca + cima * l_ua * .72 - frente * l_ua * .22 + lado * l_ua * .03 - cotovelo   # o osso da cabeca nasce na nuca: topo ~0,7 braco acima
         elif tipo == "maos_nas_costas":
             dir_ante = pelve - frente * l_ua * .5 + cima * l_ua * .05 + lado * l_ua * .04 - cotovelo
-        elif tipo == "sentado":
+        elif tipo == "sentado_entrega" and sgn < 0:
+            dir_ante = lado * .95 + cima * .3 + frente * .1
+        elif tipo in ("sentado", "sentado_entrega"):
             dir_ante = frente * .9 + cima * .3 - lado * .12
         elif tipo == "soprando":
             dir_ante = (cabeca + frente * l_ua * .45 - cima * l_ua * .1 - cotovelo) if sgn > 0 else (-cima * .9 + frente * .3)
