@@ -138,7 +138,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
         elif tipo == "maos_nas_costas":
             dir_braco = -cima * .85 - frente * .42 + lado * .14
         elif tipo == "sentado_entrega" and sgn < 0:      # braco esquerdo para fora da janela, entregando o documento
-            dir_braco = lado * .8 + frente * .42 - cima * .3
+            dir_braco = lado * .78 + frente * .5 + cima * .12        # ombro -> cotovelo: para fora e um pouco para cima, por cima do peitoril
         elif tipo in ("sentado", "sentado_entrega"):                          # maos no volante
             dir_braco = -cima * .5 + frente * .8 + lado * .12
         elif tipo == "soprando":                         # em pe, uma mao perto da boca (segurando o bocal)
@@ -152,7 +152,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
         elif tipo == "maos_nas_costas":
             dir_ante = pelve - frente * l_ua * .5 + cima * l_ua * .05 + lado * l_ua * .04 - cotovelo
         elif tipo == "sentado_entrega" and sgn < 0:
-            dir_ante = lado * .95 + cima * .3 + frente * .1
+            dir_ante = lado * .95 + cima * .22 + frente * .05
         elif tipo in ("sentado", "sentado_entrega"):
             dir_ante = frente * .9 + cima * .3 - lado * .12
         elif tipo == "soprando":

@@ -607,29 +607,55 @@ export async function iniciar(ctx) {
   // cartao na mao do condutor (pequeno, com area de clique maior) e o mesmo cartao na mao do agente (grande, para ler)
   const docMao = new THREE.Mesh(new THREE.PlaneGeometry(.125, .078), matDoc); docMao.visible = false; scene.add(docMao);
   const docHit = new THREE.Mesh(new THREE.SphereGeometry(.2, 10, 8), new THREE.MeshBasicMaterial({ visible: false })); docMao.add(docHit);
-  const docCam = new THREE.Mesh(new THREE.PlaneGeometry(.27, .17), matDoc.clone()); docCam.material.depthTest = false; docCam.renderOrder = 998;
+  const docCam = new THREE.Mesh(new THREE.PlaneGeometry(.27, .17), matDoc.clone()); docCam.material.depthTest = false; docCam.material.transparent = true; docCam.renderOrder = 998;
   docCam.position.set(-.36, -.07, -.55); docCam.rotation.set(-.12, .5, 0);      // a esquerda do painel de opcoes docCam.visible = false; camera.add(docCam);
   const DM = new THREE.Vector3(), DA = new THREE.Vector3();
+  const docVista = new THREE.Mesh(new THREE.PlaneGeometry(.7, .44), new THREE.MeshBasicMaterial({ map: dtex, toneMapped: false, fog: false, depthTest: false, transparent: true }));     // transparent: desenha depois dos vidros
+  docVista.renderOrder = 1000; docVista.visible = false; scene.add(docVista);
+  let aposVista = null;
+  function mostrarVista(tipo, depois) {                     // documento de frente, no meio da visao
+    fecharPaineis(); desenharDoc(tipo); docCam.visible = false;
+    camera.getWorldPosition(V); camera.getWorldDirection(V2);          // bem no centro do olhar, mesmo olhando para baixo
+    docVista.position.copy(V).addScaledVector(V2, .85); docVista.lookAt(V);
+    docVista.visible = true; aposVista = depois;
+    legenda('Documento', 'Leia os dados com calma. Gatilho ou clique para continuar.', 8);
+  }
+  function fecharVista() {
+    if (!docVista.visible) return false;
+    docVista.visible = false; const f = aposVista; aposVista = null; f?.();
+    return true;
+  }
   function oferecerDocumentos() {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
     if (u.acoes?.sentado_entregando) { u.baseAntes = u.base; u.base = 'sentado_entregando'; animar(c, 'sentado_entregando', 1e6, .45); }
-    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status();
+    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status(); curvarDedos(c, true);
     dica('O condutor estendeu os documentos: aponte para o cartão na mão dele e aperte o gatilho (ou clique) para pegar.');
   }
   function pegarDocumentos() {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
-    A.docsPegos = true; docMao.visible = false;
+    A.docsPegos = true; docMao.visible = false; curvarDedos(c, false);
     if (u.baseAntes) { u.base = u.baseAntes; u.baseAntes = null; animar(c, u.base, 1e6, .5); }
-    conferirCNH();
+    mostrarVista('cnh', conferirCNH);
   }
-  function seguirDocumento() {                              // o cartao acompanha a mao esquerda do condutor
+  const DC = new THREE.Vector3(), DN = new THREE.Vector3(), DY = new THREE.Vector3(), DMAT = new THREE.Matrix4();
+  function curvarDedos(n, on) {                             // dedos da mao esquerda fecham sobre o cartao
+    const u = n?.userData, m = u?.modelo; if (!m) return;
+    if (!u.dedos) { u.dedos = []; m.traverse(o => { if (o.isBone && /Bip01_L_Finger\d+$/.test(o.name)) u.dedos.push({ b: o, base: o.quaternion.clone() }); }); }
+    for (const d of u.dedos) { d.b.quaternion.copy(d.base); if (on) d.b.quaternion.multiply(QZ.setFromAxisAngle(EIXO_Z, /Finger0\d?$/.test(d.b.name) ? .3 : -.5)); }
+  }
+  function seguirDocumento() {                              // o cartao fica entre os dedos da mao esquerda do condutor
     if (!docMao.visible) return;
     const m = npcs.condutor?.userData.modelo, mao = m?.getObjectByName('Bip01_L_Hand'), ante = m?.getObjectByName('Bip01_L_Forearm');
-    if (!mao) { docMao.position.set(carro.position.x + BANCO[0] + .2, 1.02, carro.position.z - .98); }
-    else { mao.getWorldPosition(DM); ante?.getWorldPosition(DA); docMao.position.copy(DM).addScaledVector(DA.subVectors(DM, DA).normalize(), .1); docMao.position.y += .02; }
-    camera.getWorldPosition(DA); docMao.lookAt(DA);
+    if (!mao || !ante) { docMao.position.set(carro.position.x + BANCO[0] + .2, 1.1, carro.position.z - 1.0); camera.getWorldPosition(DA); docMao.lookAt(DA); return; }
+    mao.getWorldPosition(DM); ante.getWorldPosition(DA);
+    const dir = DA.subVectors(DM, DA).normalize();          // do antebraco para a mao
+    camera.getWorldPosition(DC); DC.sub(DM).normalize();
+    DN.set(0, .8, 0).addScaledVector(DC, .6); DN.addScaledVector(dir, -DN.dot(dir)).normalize();     // face do cartao para cima, inclinada para o agente
+    DY.crossVectors(DN, dir);
+    docMao.quaternion.setFromRotationMatrix(DMAT.makeBasis(dir, DY, DN));
+    docMao.position.copy(DM).addScaledVector(dir, .125).addScaledVector(DN, .012);
   }
 
   /* ================= fluxo do atendimento ================= */
@@ -639,6 +665,7 @@ export async function iniciar(ctx) {
     criarNPCs(v);
     window.__transito?.segurar(false);
     if (porta) porta.rotation.y = 0;
+    docVista.visible = false; aposVista = null;
     docMao.visible = false; docCam.visible = false;
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
@@ -693,7 +720,7 @@ export async function iniciar(ctx) {
     painelOpc('Tablet · habilitação', 'Carteira Nacional de Habilitação', CEN.documentos.cnh, op => {
       A.cnhOk = true;
       if (op.id === certo) registrar('conferir_cnh'); else { registrar('consulta_errada', 'CNH: ' + op.id); if (S.modo === 'treino') legenda('Instrutor', 'Confira a validade: ' + CEN.documentos.cnh.find(o => o.id === certo).fala + '.', 6); }
-      setTimeout(conferirCRLV, S.modo === 'treino' && op.id !== certo ? 3000 : 300);
+      setTimeout(() => mostrarVista('crlv', conferirCRLV), S.modo === 'treino' && op.id !== certo ? 3000 : 300);
     }, `Nome: ${CEN.documentos.nomes[v.modelo]}\nCategoria: B\nValidade: ${dataBR(val)}\nData de hoje: ${dataBR(hoje)}`);
   }
   function conferirCRLV() {
@@ -964,6 +991,7 @@ export async function iniciar(ctx) {
 
   /* ================= clique / gatilho ================= */
   function usar(ray) {
+    if (fecharVista()) return true;                         // documento em vista frontal: qualquer clique continua
     for (const p of paineis) if (p.clique(ray)) return true;
     if (!S.ativo) return explorar(ray);
     const hn = ray.intersectObjects(Object.values(npcs).filter(n => n.visible).map(n => n.userData.hit), false)[0];
@@ -1052,10 +1080,10 @@ export async function iniciar(ctx) {
 
   window.__trein = {
     clique: ray => usar(ray), gatilho: ray => usar(ray),
-    apontar, painelAberto: () => paineis.some(p => p.mesh.visible),
+    apontar, painelAberto: () => paineis.some(p => p.mesh.visible) || docVista.visible,
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, fecharVista, docVista, oferecerDocumentos, pegarDocumentos, docMao, docCam, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;
