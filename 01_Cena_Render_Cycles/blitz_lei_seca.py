@@ -237,6 +237,54 @@ def luz(name, tipo, watts, cor, pos, col, parent=None, alvo=None, **kw):
         ob.rotation_euler = (Vector(alvo) - Vector(pos)).to_track_quat("-Z", "Y").to_euler()
     return ob
 
+# ---- logotipo da operacao (imagem fornecida pelo orgao, com fundo transparente: logos/logo_lei_seca.png)
+#      Sem o arquivo, a cena usa o texto "LEI SECA" no lugar.
+LOGO = None
+_logo_png = os.path.join(AQUI, "logos", "logo_lei_seca.png")
+if os.path.exists(_logo_png):
+    _img = bpy.data.images.load(_logo_png); _img.pack()
+    LOGO_PROP = _img.size[0] / _img.size[1]
+    LOGO = bpy.data.materials.new("Logo_Lei_Seca")
+    _nt = LOGO.node_tree; _b = _nt.nodes.get("Principled BSDF")
+    _t = _nt.nodes.new("ShaderNodeTexImage"); _t.image = _img
+    _r = _nt.nodes.new("ShaderNodeMath"); _r.operation = "ROUND"      # transparencia recortada (glTF: alphaMode MASK)
+    _nt.links.new(_t.outputs["Color"], _b.inputs["Base Color"])
+    _nt.links.new(_t.outputs["Alpha"], _r.inputs[0]); _nt.links.new(_r.outputs[0], _b.inputs["Alpha"])
+    _b.inputs["Roughness"].default_value = .55
+    for _attr, _val in (("surface_render_method", "DITHERED"), ("blend_method", "CLIP")):
+        try: setattr(LOGO, _attr, _val)
+        except Exception: pass
+
+def adesivo(name, ponto, nu, nv, col, parent=None, pos=(0, 0, 0)):
+    """Adesivo com o logotipo sobre uma superficie curva: ponto(u, v) devolve a posicao 3D para u, v de 0 a 1."""
+    bm = bmesh.new(); uvl = bm.loops.layers.uv.new("UVMap")
+    g = [[bm.verts.new(ponto(i / nu, j / nv)) for j in range(nv + 1)] for i in range(nu + 1)]
+    for i in range(nu):
+        for j in range(nv):
+            f = bm.faces.new((g[i][j], g[i + 1][j], g[i + 1][j + 1], g[i][j + 1]))
+            for lp, (a, b) in zip(f.loops, ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))):
+                lp[uvl].uv = (a / nu, b / nv)
+    ob = finish(name, bm, pos, LOGO, col, parent, smooth=True)
+    return ob
+
+def logo_lateral(name, R, col, sup_y, xc, zc, larg):
+    """Logotipo colado na lateral de um veiculo, dos dois lados (legivel de fora)."""
+    alt = larg / LOGO_PROP
+    for lado in (1, -1):
+        def ponto(u, v, lado=lado):
+            x = xc + lado * (.5 - u) * larg; z = zc + (v - .5) * alt      # quem olha de fora le da esquerda para a direita
+            return (x, sup_y(x, z, lado) + lado * .012, z)
+        adesivo(name, ponto, 16, 6, col, R)
+
+def logo_balao(raiz, R, zc, larg=2.5):
+    alt = larg / LOGO_PROP
+    for sgn in (-1, 1):
+        def ponto(u, v, sgn=sgn):
+            a = (u - .5) * larg / R; z = (v - .5) * alt
+            r = math.sqrt(max(.01, R * R - z * z)) + .015
+            return (r * math.sin(a) * (-sgn), sgn * r * math.cos(a), z)
+        adesivo("Balao_Logo", ponto, 24, 8, C_BLITZ, raiz, (0, 0, zc))
+
 # ================================================================== 1. RUA
 RUA_X = 46.0
 box("Asfalto", (2 * RUA_X, 14, .2), (0, 0, -.1), M["asfalto"], C_RUA)
@@ -320,7 +368,8 @@ def balao(x, y):
         dente = abs(((lon / (2 * PI) * 6) % 1) - .5) * 2    # 0 no meio do gomo, 1 na borda
         f.material_index = 1 if abs(lat) > .5 + .55 * dente else 0
     finish("Balao_Lona", bm, (0, 0, zc), [M["lona_balao"], M["lona_balao_az"]], C_BLITZ, raiz, smooth=True)
-    for virado, sgn in (("-y", -1), ("+y", 1)):             # LEI SECA dos dois lados, acompanhando a curva
+    if LOGO: logo_balao(raiz, R, zc)
+    for virado, sgn in ((("-y", -1), ("+y", 1)) if not LOGO else ()):             # LEI SECA dos dois lados, acompanhando a curva
         me = texto_malha("LEI SECA", .52); me.materials.append(M["texto_az"])
         for v in me.vertices:
             a = v.co.x / R; r = math.sqrt(max(.01, R * R - v.co.y ** 2)) + .012
@@ -768,10 +817,11 @@ r = carro_modelo("Van_Apoio", C_VEIC, "van", (0.4, 5.5, 0), 0, cor="#eeefef", ti
 if r:
     VAN, sy_, sx_, inf = r
     faixa_lateral("Van_Faixa_Azul", VAN, C_VEIC, sy_, -2.45, 1.3, .62, .8, M["azul_claro"])
+    if LOGO: logo_lateral("Van_Logo", VAN, C_VEIC, sy_, -.95, 1.33, 2.5)
     for lado in (1, -1):
         v = "+y" if lado > 0 else "-y"
-        texto("Van_Texto_Lei_Seca", "LEI SECA", .36, (-.95, sy_(-.95, 1.3, lado) + lado * .01, 1.3), v, M["texto_az"], C_VEIC, VAN)
-        texto("Van_Texto_Sub", "OPERAÇÃO DE FISCALIZAÇÃO", .085, (-.95, sy_(-.95, 1.0, lado) + lado * .01, 1.0), v, M["texto_az"], C_VEIC, VAN)
+        if not LOGO: texto("Van_Texto_Lei_Seca", "LEI SECA", .36, (-.95, sy_(-.95, 1.3, lado) + lado * .01, 1.3), v, M["texto_az"], C_VEIC, VAN)
+        if not LOGO: texto("Van_Texto_Sub", "OPERAÇÃO DE FISCALIZAÇÃO", .085, (-.95, sy_(-.95, 1.0, lado) + lado * .01, 1.0), v, M["texto_az"], C_VEIC, VAN)
 else:
     veiculo("Van_Apoio", C_VEIC, (0.4, 5.5, 0), 0, EST_VAN, M["pint_van"], M["azul_claro"], "van", aro=M["aro_aco"], placa="LSC4E26")
 
@@ -837,6 +887,7 @@ camera("Camera_Abordagem", (-4.6, 5.9, 1.65), (-7.6, 1.6, 1.0), 20)
 camera("Camera_Chegada", (-27.0, 2.6, 1.65), (-10, 3.0, 1.2), 22)
 camera("Camera_Tenda", (-13.5, 1.2, 1.65), (-10, 6.0, 1.6), 20)
 camera("Camera_Teste", (5.0, 0.9, 1.65), (11, 3.6, 1.0), 20)
+camera("Camera_Apoio", (-4.5, -1.2, 1.7), (-3.0, 6.5, 1.9), 20)
 camera("Camera_Aerea", (-1.0, -9.5, 17.0), (0.0, 3.2, 0), 15)
 scene.camera = bpy.data.objects["Camera_Aerea"]
 
