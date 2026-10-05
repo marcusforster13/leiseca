@@ -1,5 +1,5 @@
 {
- "gerado_em": "2026-10-05 14:14",
+ "gerado_em": "2026-10-05 14:26",
  "qualidade": "padrao",
  "lightmaps": {
   "01_Rua_Estatico": {
@@ -8,11 +8,11 @@
   },
   "02_Predios_Estatico": {
    "lm": "lightmaps/LM_02_Predios.png",
-   "max": 0.55459
+   "max": 0.55457
   },
   "03_Arvores_Postes_Estatico": {
    "lm": "lightmaps/LM_03_Arvores_Postes.png",
-   "max": 0.33949
+   "max": 0.33953
   },
   "04_Blitz_Estrutura_Estatico": {
    "lm": "lightmaps/LM_04_Blitz_Estrutura.png",
@@ -20,39 +20,39 @@
   },
   "05_Cones_Barreiras_Estatico": {
    "lm": "lightmaps/LM_05_Cones_Barreiras.png",
-   "max": 0.93403
+   "max": 0.93389
   },
   "06_Veiculos_Apoio_Estatico": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_1": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_2": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_3": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_4": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_5": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "Giroflex_Lente_6": {
    "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
-   "max": 0.71851
+   "max": 0.71847
   },
   "07_Carro_Regularizacao_Estatico": {
    "lm": "lightmaps/LM_07_Carro_Regularizacao.png",
-   "max": 2.09383
+   "max": 2.0939
   }
  },
  "lightmap_ganho": 3.14159,
@@ -147,10 +147,15 @@
  },
  "banco": [
   -0.2575884389877319,
-  0.391808295249939,
+  0.39180789291858675,
   0.5138195085525513
  ],
  "luz_dinamica": 1.6,
+ "guincho_luz": [
+  22.6205,
+  2.4538,
+  -5.4
+ ],
  "parada": [
   -7.0,
   0.0,

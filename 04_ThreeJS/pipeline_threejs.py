@@ -333,6 +333,7 @@ cfg = {"gerado_em": time.strftime("%Y-%m-%d %H:%M"), "qualidade": "rapida" if RA
        "lightmaps": lm_json, "lightmap_ganho": round(math.pi, 5), "exposicao": 1.0,
        "env": env_arq, "env_intensidade": .35, "cameras": cams, "giroflex": giro,
        "banco": list(scene.get("ls_banco", (0, 0, 0))), "luz_dinamica": 1.6,
+       "guincho_luz": b2t(scene.get("ls_guincho_luz", (0, 0, 0))),
        "parada": b2t(scene.get("ls_parada", (0, 0, 0))), "mesa_equip": b2t(scene.get("ls_mesa_equip", (0, 0, 0))),
        "torres": [b2t(scene["ls_torres"][i:i + 3]) for i in range(0, len(scene.get("ls_torres", [])), 3)]}
 with open(os.path.join(WEB, "cena.json"), "w", encoding="utf-8") as f:

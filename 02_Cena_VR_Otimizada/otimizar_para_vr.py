@@ -282,7 +282,7 @@ n_conj = 0
 for cn in ("08_Interativos", "10_Carro_Abordado"):
     col = bpy.data.collections.get(cn)
     for raiz in [o for o in (col.objects if col else []) if o.parent is None and o.type == "EMPTY"]:
-        objs = [o for o in raiz.children_recursive if o.type == "MESH" and "_Roda_" not in o.name]   # rodas ficam soltas para girar
+        objs = [o for o in raiz.children_recursive if o.type == "MESH" and not any(k in o.name for k in ("_Roda_", "_Porta"))]   # rodas ficam soltas para girar
         if not objs:
             continue
         for o in objs:
@@ -291,7 +291,7 @@ for cn in ("08_Interativos", "10_Carro_Abordado"):
         if len(objs) > 1:
             with bpy.context.temp_override(active_object=alvo, selected_objects=objs, selected_editable_objects=objs):
                 bpy.ops.object.join()
-        for o in [o for o in raiz.children_recursive if "_Roda_" not in o.name]:
+        for o in [o for o in raiz.children_recursive if not any(k in o.name for k in ("_Roda_", "_Porta"))]:
             bpy.data.objects.remove(o, do_unlink=True)
         alvo.name = raiz.name + "_Malha"; alvo.data.name = alvo.name
         mw = alvo.matrix_world.copy(); alvo.parent = raiz; alvo.matrix_world = mw

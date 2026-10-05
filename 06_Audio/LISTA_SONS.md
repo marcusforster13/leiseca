@@ -13,12 +13,12 @@ Fonte: **freesound.org**, só sons com licença **Creative Commons 0** (uso livr
 | `bip_etilometro` | Bipe curto do aparelho (o site toca duas vezes) | "Medium Electronic Beep", wubitog, som 188383 |
 | `radio_bip` | Bipe de rádio antes das falas da coordenação | "Walkie Talkie - Roger Beep", bruce965, som 321906 |
 | `radio_chiado` | Chiado de rádio (baixado, ainda não usado) | "Walkie_Talkie_Static", crcavol, som 154654 |
+| `porta_carro` | Porta do carro abrindo e depois fechando (o site toca cada trecho na hora certa) | "Car Door (Open and Close)", Yin_Yang_Jake007, som 416963 |
 
 ## Falta
 
 | Arquivo | O que é |
 |---|---|
 | `sirene_longe`, `cachorro_longe` | Sons distantes, esporádicos (o site já sabe tocar se os arquivos existirem) |
-| `porta_carro` | Porta do carro abrindo e fechando, para quando o condutor descer |
 
 Vozes: rode `gerar_roteiro_vozes.py` para gerar o roteiro de gravação. Sem gravação, o site usa a voz sintética do navegador, com legenda.

@@ -27,7 +27,7 @@ def _anims(s):
             "sentado_nervoso": s + "_idle_nervous_01+sentado", "soprando": s + "_idle_neutral_01+soprando"}
 PAPEIS = {
     "condutor_a": ("Male_Adult_01", {**_anims("m"), "irritado": "m_idle_angry_01", "andando": "m_walk_fast_01"}),
-    "condutor_b": ("Female_Adult_08", _anims("f")),
+    "condutor_b": ("Female_Adult_08", {**_anims("f"), "andando": "m_walk_fast_01"}),
     "condutor_c": ("Male_Adult_14", {**_anims("m"), "irritado": "m_idle_angry_01", "andando": "m_walk_fast_01"}),
     # equipe da operacao (figurantes): agentes de colete e policiais militares
     "agente_a": ("Construction_Male_08", {"parada": "m_idle_neutral_01", "falando": "m_gestic_talk_neutral_01"}),

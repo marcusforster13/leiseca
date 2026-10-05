@@ -821,7 +821,7 @@ def repintar(img, cor, nome):
     novo = bpy.data.images.new(nome, w, h, alpha=True); novo.pixels.foreach_set(px.ravel()); novo.pack()
     return novo
 
-def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False):
+def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False, porta=None):
     """Importa modelos/carros/<arquivo>.glb com a frente para +X. Devolve (raiz, sup_y, sup_x, info) ou None se faltar."""
     caminho = os.path.join(CARROS, arquivo + ".glb")
     if not os.path.exists(caminho): return None
@@ -863,9 +863,34 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
         frente = [f for f in esq if f.calc_center_median().x > meio]
         c = sum((f.calc_center_median() for f in frente), Vector()) / len(frente)
         info["janela"] = c.copy()
+        info["jx"] = (min(v.co.x for f in frente for v in f.verts), max(v.co.x for f in frente for v in f.verts))
         if janela_aberta: apagar += frente
     if apagar: bmesh.ops.delete(bm, geom=list(set(apagar)), context="FACES")
+    tem_porta = False
+    if porta and "jx" in info:
+        # porta do motorista: recorta a lateral esquerda entre a coluna da frente e a do meio, da soleira ao teto,
+        # e separa numa peca propria com a origem na dobradica (o site gira a peca para abrir)
+        hw_ = max(v.co.y for v in bm.verts)
+        xd1, zb_ = info["jx"][1] + porta[1], porta[2]; xd0 = xd1 - porta[0]       # porta = (comprimento, folga a frente da janela, altura da soleira)
+        for co, no in (((xd0, 0, 0), (1, 0, 0)), ((xd1, 0, 0), (1, 0, 0)), ((0, 0, zb_), (0, 0, 1))):
+            fs = [f for f in bm.faces if f.calc_center_median().y > 0]
+            geom = list({v for f in fs for v in f.verts}) + list({e for f in fs for e in f.edges}) + fs
+            bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
+        for f in bm.faces:
+            c = f.calc_center_median()
+            f.select = bool(c.y > hw_ * .45 and xd0 < c.x < xd1 and c.z > zb_ and f.normal.z < .8 and f.normal.y > -.3)
+        tem_porta = any(f.select for f in bm.faces)
+        info["dobradica"] = Vector((xd1, hw_ - .04, zb_ + .35))
     bm.to_mesh(me); bm.free()
+    if tem_porta:
+        mp = me.copy(); mp.name = nome + "_Porta"
+        for malha_, manter_sel in ((me, False), (mp, True)):
+            b2 = bmesh.new(); b2.from_mesh(malha_)
+            bmesh.ops.delete(b2, geom=[f for f in b2.faces if f.select != manter_sel], context="FACES")
+            if manter_sel: bmesh.ops.translate(b2, verts=b2.verts, vec=-info["dobradica"])
+            b2.to_mesh(malha_); b2.free()
+        P = bpy.data.objects.new(nome + "_Porta", mp); col.objects.link(P); P.parent = R; P.location = info["dobradica"]
+        for p_ in mp.polygons: p_.use_smooth = True
     R.location = pos; R.rotation_euler = (0, 0, rz)
     bpy.context.view_layer.update()
     pts = [Vector(c) for c in corpo.bound_box]
@@ -930,11 +955,14 @@ else:
     veiculo("Van_Apoio", C_VEIC, (0.4, 5.5, 0), 0, EST_VAN, M["pint_van"], M["azul_claro"], "van", aro=M["aro_aco"], placa="LSC4E26")
 
 # ---- guincho plataforma
-if not carro_modelo("Guincho", C_VEIC, "guincho", (20.2, 5.4, 0), 0):
+r = carro_modelo("Guincho", C_VEIC, "guincho", (20.2, 5.4, 0), 0)
+if r:
+    scene["ls_guincho_luz"] = [20.2 + r[3]["comp"] / 2 - 1.05, 5.4, r[3]["alt"] + .06]
+else:
     guincho((20.2, 5.4, 0))
 
 # ---- carro abordado (para no ponto de abordagem; janela do motorista aberta) e carro na regularizacao
-r = carro_modelo("Carro_Abordado", C_ABORD, "hatch", (-7.0, 1.9, 0), 0, cor="#9a9da3", janela_aberta=True, interior=True)
+r = carro_modelo("Carro_Abordado", C_ABORD, "hatch", (-7.0, 1.9, 0), 0, cor="#9a9da3", janela_aberta=True, interior=True, porta=(1.1, .2, .3))
 if r:
     ABORD = r[0]; ABORD["banco"] = r[3].get("banco", [.1, .36, .35])
 else:

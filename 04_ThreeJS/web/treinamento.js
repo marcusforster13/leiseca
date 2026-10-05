@@ -391,6 +391,7 @@ export async function iniciar(ctx) {
   const PARADA = carro.position.clone(), ENTRADA = PARADA.clone(); ENTRADA.x -= 22;
   const SAIDA = [[PARADA.x + 5, PARADA.z + .2], [PARADA.x + 11.5, 1.2], [PARADA.x + 18, 1.75], [46, 1.75]];   // sai pela faixa livre
   const C = { rota: [], vel: 0, vmax: 5, frear: false, aoChegar: null };
+  const SOM_PORTA = { abrir: { ini: .5, dur: 2.0 }, fechar: { ini: 2.6 } };      // trechos do arquivo porta_carro (abre e depois fecha)
   const rodas = []; carro.traverse(o => { if (/_Roda_[DT][ED]$/.test(o.name)) rodas.push(o); });       // rodas soltas: giram conforme o carro anda
   function moverCarro(dt) {
     if (!C.rota.length) return;
@@ -417,9 +418,42 @@ export async function iniciar(ctx) {
     n.position.set(carro.position.x + V.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + V.z);
     n.rotation.y = carro.rotation.y + Math.PI / 2; n.visible = carro.visible;
   }
-  function desembarcar(n, dx = 0) {
-    const u = n.userData; u.assento = 0; (u.mats || []).forEach(m => { m.clippingPlanes = null; m.needsUpdate = true; }); u.base = 'parada'; u.semVirar = false;
-    n.position.set(carro.position.x + BANCO[0] + dx, 0, carro.position.z - 1.45); animar(n, 'parada', 1e6, .1);
+  // porta do motorista (peca separada no modelo, com a origem na dobradica)
+  const porta = carro.getObjectByName('Carro_Abordado_Porta');
+  const PORTA_ABERTA = -1.12;
+  const suave = (seg, passo) => new Promise(fim => {       // interpola de 0 a 1 em 'seg' segundos (setTimeout: funciona com a aba oculta)
+    const t0 = performance.now();
+    const tic = () => { const k = Math.min(1, (performance.now() - t0) / (seg * 1000)); passo(k * k * (3 - 2 * k)); k < 1 ? setTimeout(tic, 16) : fim(); };
+    tic();
+  });
+  function moverPorta(alvo, seg = .7) {
+    if (!porta) return Promise.resolve();
+    const a0 = porta.rotation.y;
+    return suave(seg, e => { porta.rotation.y = a0 + (alvo - a0) * e; });
+  }
+  const somPorta = trecho => window.__som?.tocar('porta_carro', carro.position.clone().setY(.9), false, trecho);
+  /* o condutor sai do carro: a porta abre, ele se levanta para fora, da dois passos e a porta fecha.
+     comPorta = false (passageira, do outro lado): aparece em pe ao lado do carro */
+  async function desembarcar(n, dx = 0, comPorta = false) {
+    const u = n.userData;
+    const soltar = () => { u.assento = 0; (u.mats || []).forEach(m => { m.clippingPlanes = null; m.needsUpdate = true; }); u.base = 'parada'; };
+    if (!comPorta || !porta) {
+      soltar(); u.semVirar = false;
+      n.position.set(carro.position.x + BANCO[0] + dx, 0, carro.position.z - 1.45); animar(n, 'parada', 1e6, .1);
+      return;
+    }
+    somPorta(SOM_PORTA.abrir); await moverPorta(PORTA_ABERTA, .8);
+    const ini = n.position.clone(), r0 = n.rotation.y;
+    const fora = new THREE.Vector3(carro.position.x + BANCO[0] - .12, 0, carro.position.z - 1.02);
+    soltar(); u.semVirar = true; animar(n, 'parada', 1e6, .6);
+    await suave(.9, e => { n.position.lerpVectors(ini, fora, e); n.rotation.y = r0 + (Math.PI - r0) * e; });      // levanta virando para a calcada
+    await new Promise(fim => {                              // dois passos para longe do carro
+      u.vel = 1.0; u.rota = [new THREE.Vector3(fora.x - .55, 0, fora.z - 1.0)];
+      if (u.acoes?.andando) animar(n, 'andando', 1e6, .25);
+      u.aoChegar = () => { animar(n, 'parada', 1e6, .3); u.semVirar = false; fim(); };
+      setTimeout(fim, 4000);                                // garantia, caso o quadro esteja pausado
+    });
+    somPorta(SOM_PORTA.fechar); await moverPorta(0, .6);
   }
 
   /* ================= equipamentos da mesa ================= */
@@ -545,6 +579,7 @@ export async function iniciar(ctx) {
     A = { n: HIST.length + 1, fase: 'chegando', titulo: cap?.titulo || `Atendimento ${HIST.length + 1}` };
     criarNPCs(v);
     window.__transito?.segurar(false);
+    if (porta) porta.rotation.y = 0;
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
     const abrir = () => {
@@ -705,9 +740,9 @@ export async function iniciar(ctx) {
     A.fase = 'fim'; pegarEtilometro(false);
     const v = S.variacao, levado = v.condutor === 'alcool_crime' && A.pm;
     if (A.destino === 'remover') {
-      desembarcar(npcs.condutor); if (npcs.passageiro) desembarcar(npcs.passageiro, -1.0);
+      desembarcar(npcs.condutor, 0, true); if (npcs.passageiro) desembarcar(npcs.passageiro, -1.6);
       legenda('Operação', levado ? 'Condutor encaminhado à delegacia. Veículo aguardando o guincho.' : 'Veículo retido, aguardando o guincho. O condutor aguarda fora do carro.', 5);
-      setTimeout(concluir, 4500);
+      setTimeout(concluir, 7500);
     } else {
       if (A.destino === 'entregar') legenda('Operação', 'A passageira assume o volante.', 4);
       const tr = window.__transito, t0 = performance.now(); tr?.segurar(true);
@@ -954,7 +989,7 @@ export async function iniciar(ctx) {
     apontar, painelAberto: () => paineis.some(p => p.mesh.visible),
     menu: abrirMenu, quadro, estado: S, relatorio,
     // acesso para testes automatizados e para o instrutor
-    _t: { comecar, entrar, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
+    _t: { comecar, entrar, desembarcar, moverPorta, porta, figurantes, cliqueFigurante, menuCondutor, usarItem, encerrar, objetivos, sortear, derivar, novoAtendimento, npcs, carro, C,
       atendimento: () => A, historico: HIST, botoes: () => (dialogo.mesh.visible ? dialogo : menu).botoes, painel: () => (dialogo.mesh.visible ? dialogo : menu.mesh.visible ? menu : null) }
   };
   return window.__trein;
