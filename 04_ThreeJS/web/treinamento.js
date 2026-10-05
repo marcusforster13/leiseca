@@ -330,6 +330,7 @@ export async function iniciar(ctx) {
       else if (f.medidor) alvo = Math.pow(Math.min(1, Math.max(0, f.medidor() - .06) / .75), .8);   // silencio ~0,04; fala 0,3 a 0,8
       else if (f.sintetica) alvo = Math.max(0, .3 + .45 * Math.sin(agora * .019) * Math.sin(agora * .0063 + 1.7));   // ritmo de silabas
     }
+    if (n.userData.soprando) alvo = 1.3 + .08 * Math.sin(agora * .012);      // soprando no etilometro: boca aberta em volta do bocal
     r.boca += (alvo - r.boca) * Math.min(1, dt * (alvo > r.boca ? 28 : 14));
     const q = r.jaw.quaternion;
     if (r.escrito && q.equals(r.escrito)) q.copy(r.jawBase);   // a animacao nao mexeu na mandibula neste quadro
@@ -807,12 +808,12 @@ export async function iniciar(ctx) {
   function soprar() {
     const v = S.variacao, r = CEN.etilometro[v.condutor];
     legenda('Etilômetro', 'Soprando… aguarde a leitura.', 3.6);
-    { const c = npcs.condutor; if (c?.userData.assento) animar(c, 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
+    { const c = npcs.condutor; if (c) c.userData.soprando = true; if (c?.userData.assento) animar(c, 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
     visorTexto('SOPRE'); levarABoca();
     setTimeout(() => {
       if (!A) return;
       bip(); A.testado = true; A.resultado = r; A.bocalUsado = true; fecharPaineis();
-      visorTexto(r.medido, 'mg/L'); trazerDaBoca();
+      visorTexto(r.medido, 'mg/L'); trazerDaBoca(); if (npcs.condutor) npcs.condutor.userData.soprando = false;
       dialogo.mostrar({ tag: 'Etilômetro · leitura', titulo: `${r.medido} mg/L`, texto: `Valor considerado: ${r.considerado} mg/L\n${CEN.etilometro.aparelho}`,
         botoes: [{ label: 'Mostrar o visor e informar o resultado ao condutor', acao: mostrarResultado }, { label: 'Guardar o aparelho sem mostrar', acao: fechar }] });
       status();
