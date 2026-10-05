@@ -99,7 +99,7 @@ say("Modificadores aplicados em %d objetos; textos e fios convertidos em malha."
 
 # ------------------------------------------------------------------ 4. materiais: bake dos procedurais, UV no lugar de projecao
 MAT_TILE = {}
-UV_NATIVE = {"Rede_Listrada", "Tapete", "Grama_Cartao", "Cobogo_Alpha", "Folha_Costela", "Folha_Arbusto", "Folha_Palmeira"}
+UV_NATIVE = {"Rede_Listrada", "Tapete", "Grama_Cartao", "Cobogo_Alpha", "Folha_Costela", "Folha_Arbusto", "Folha_Palmeira", "Folha_Arvore"}
 
 def bake_tile(mat, tile, res, vertical=False):
     img = bpy.data.images.new(mat.name + "_bake", res, res, alpha=False)
@@ -258,7 +258,7 @@ say("UVs em caixa (escala real em metros) aplicadas em todas as malhas.")
 # Uma caixa orientada (OBB) por objeto relevante: paredes, pisos, moveis, carros, postes, troncos.
 # Sai como objeto "Colisao" (colecao 99_Colisao, fora do render) e em colisao.fbx / colisao.glb.
 COL_FORA = {"09_Luzes_Cameras", "08_Interativos", "10_Carro_Abordado"}
-COL_PULAR = ("_Copa", "_Texto", "Texto_", "Adesivo", "Faixa", "Marca_", "Giroflex", "Balao_Estai", "Cone_", "Asfalto_Remendo", "Tampa_", "Sarjeta", "Brasao", "_Placa", "_Janela", "_Porta_Loja", "_Trelica", "_Luz")
+COL_PULAR = ("_Copa", "_Galhos", "_Texto", "Texto_", "Adesivo", "Faixa", "Marca_", "Giroflex", "Balao_Estai", "Cone_", "Asfalto_Remendo", "Tampa_", "Sarjeta", "Brasao", "_Placa", "_Janela", "_Porta_Loja", "_Trelica", "_Luz")
 caixas = []
 for ob in scene.objects:
     if ob.type != "MESH" or not ob.users_collection:

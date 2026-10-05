@@ -19,6 +19,7 @@ if ($args -contains "recriar" -or -not (Test-Path "blitz_lei_seca.blend")) {
 }
 Write-Host "0/3  Integrando modelos novos e texturas CC0 na cena principal..."
 & $B -b "blitz_lei_seca.blend" --python "integrar_modelos.py" 2>&1 | Select-String -Pattern '^\[MODELOS\]' | ForEach-Object { $_.Line }
+& $B -b "blitz_lei_seca.blend" --python "arvores.py" 2>&1 | Select-String -Pattern '^\[ARVORE\]' | ForEach-Object { $_.Line }
 & $B -b "blitz_lei_seca.blend" --python "aplicar_texturas_cc0.py" 2>&1 | Select-String -Pattern '^\[CC0\]' | ForEach-Object { $_.Line }
 Pop-Location
 

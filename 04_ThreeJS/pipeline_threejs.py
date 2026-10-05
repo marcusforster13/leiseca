@@ -64,12 +64,12 @@ def para_png8(path, nome):
     """EXR/JPG de dados (rugosidade, normal) -> PNG 8 bits Non-Color, que o three.js le."""
     if path.lower().endswith((".jpg", ".png")):
         return path
-    out = os.path.join(CACHE, nome + ".png")
+    out = os.path.join(CACHE, nome + ".jpg")          # JPG: o .glb fica bem menor que com PNG
     if not os.path.exists(out):
         src = bpy.data.images.load(path); src.colorspace_settings.name = "Non-Color"
         w, h = src.size; px = np.empty(w * h * 4, np.float32); src.pixels.foreach_get(px)
         dst = bpy.data.images.new("_tmp_" + nome, w, h, alpha=False); dst.colorspace_settings.name = "Non-Color"
-        dst.pixels.foreach_set(np.clip(px, 0, 1)); dst.filepath_raw = out; dst.file_format = "PNG"; dst.save()
+        dst.pixels.foreach_set(np.clip(px, 0, 1)); dst.filepath_raw = out; dst.file_format = "JPEG"; dst.save()
         bpy.data.images.remove(src); bpy.data.images.remove(dst)
     return out
 
@@ -170,7 +170,7 @@ say("%d materiais trocados por PBR com texturas CC0" % n_pbr)
 SEM_LIGHTMAP = {"09_Luzes_Cameras", "99_Colisao", "10_Carro_Abordado", "08_Interativos"}
 # niveis:  rapido (teste, ~2 min) | padrao (~5 min) | alta (~30-60 min)
 ALTA = "alta" in ARGS
-RES = {"01_Rua": 2048, "02_Predios": 1024, "04_Blitz_Estrutura": 1024, "05_Cones_Barreiras": 1024, "06_Veiculos_Apoio": 1024}
+RES = {"01_Rua": 2048, "03_Arvores_Postes": 1024, "02_Predios": 1024, "04_Blitz_Estrutura": 1024, "05_Cones_Barreiras": 1024, "06_Veiculos_Apoio": 1024}
 RES_PADRAO = 512
 AMOSTRAS = 16 if RAPIDO else (384 if ALTA else 128)
 scene.render.engine = "CYCLES"; scene.cycles.device = "CPU"
@@ -272,7 +272,7 @@ for o in [o for o in scene.objects if o.type in {"LIGHT", "CAMERA"}]:
 bpy.ops.export_scene.gltf(filepath=os.path.join(WEB, "cena.glb"), export_format="GLB",
                           export_lights=False, export_cameras=False, export_texcoords=True, export_normals=True,
                           export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
-                          export_draco_texcoord_quantization=14, export_image_format="JPEG", export_image_quality=88,
+                          export_draco_texcoord_quantization=14, export_image_format="AUTO", export_image_quality=88,
                           use_renderable=True)
 import shutil
 col_src = os.path.normpath(os.path.join(BASE, "..", "02_Cena_VR_Otimizada", "colisao.glb"))
