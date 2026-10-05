@@ -1,0 +1,179 @@
+{
+ "gerado_em": "2026-10-05 11:42",
+ "qualidade": "padrao",
+ "lightmaps": {
+  "01_Rua_Estatico": {
+   "lm": "lightmaps/LM_01_Rua.png",
+   "max": 1.17213
+  },
+  "02_Predios_Estatico": {
+   "lm": "lightmaps/LM_02_Predios.png",
+   "max": 0.57735
+  },
+  "03_Arvores_Postes_Estatico": {
+   "lm": "lightmaps/LM_03_Arvores_Postes.png",
+   "max": 3.0
+  },
+  "04_Blitz_Estrutura_Estatico": {
+   "lm": "lightmaps/LM_04_Blitz_Estrutura.png",
+   "max": 3.0
+  },
+  "05_Cones_Barreiras_Estatico": {
+   "lm": "lightmaps/LM_05_Cones_Barreiras.png",
+   "max": 0.91848
+  },
+  "06_Veiculos_Apoio_Estatico": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_1": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_2": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_3": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_4": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_5": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "Giroflex_Lente_6": {
+   "lm": "lightmaps/LM_06_Veiculos_Apoio.png",
+   "max": 2.09802
+  },
+  "07_Carro_Regularizacao_Estatico": {
+   "lm": "lightmaps/LM_07_Carro_Regularizacao.png",
+   "max": 3.0
+  }
+ },
+ "lightmap_ganho": 3.14159,
+ "exposicao": 1.0,
+ "env": "env/noite_1k.hdr",
+ "env_intensidade": 0.35,
+ "cameras": {
+  "Camera_Abordagem": {
+   "pos": [
+    -4.6,
+    1.65,
+    -5.9
+   ],
+   "alvo": [
+    -10.2783,
+    0.4197,
+    2.239
+   ]
+  },
+  "Camera_Chegada": {
+   "pos": [
+    -27.0,
+    1.65,
+    -2.6
+   ],
+   "alvo": [
+    -17.0063,
+    1.3855,
+    -2.8351
+   ]
+  },
+  "Camera_Tenda": {
+   "pos": [
+    -13.5,
+    1.65,
+    -1.2
+   ],
+   "alvo": [
+    -7.6085,
+    1.5658,
+    -9.2798
+   ]
+  },
+  "Camera_Teste": {
+   "pos": [
+    5.0,
+    1.65,
+    -0.9
+   ],
+   "alvo": [
+    14.075,
+    0.6669,
+    -4.9838
+   ]
+  },
+  "Camera_Aerea": {
+   "pos": [
+    -1.0,
+    17.0,
+    9.5
+   ],
+   "alvo": [
+    -0.5293,
+    8.9976,
+    3.5217
+   ]
+  }
+ },
+ "giroflex": {
+  "vermelho": [
+   9.35,
+   1.92,
+   -5.1
+  ],
+  "azul": [
+   9.35,
+   1.92,
+   -5.8
+  ]
+ },
+ "banco": [
+  0.01971600000000001,
+  0.361179,
+  0.52385
+ ],
+ "luz_dinamica": 1.6,
+ "parada": [
+  -7.0,
+  0.0,
+  -1.9
+ ],
+ "mesa_equip": [
+  -4.2,
+  0.758,
+  -4.35
+ ],
+ "torres": [
+  [
+   -13.2,
+   2.9,
+   -3.5
+  ],
+  [
+   -3.3,
+   2.9,
+   -3.6
+  ],
+  [
+   6.2,
+   2.9,
+   -3.7
+  ],
+  [
+   16.0,
+   2.9,
+   -3.6
+  ],
+  [
+   -8.0,
+   2.9,
+   -7.3
+  ]
+ ]
+}

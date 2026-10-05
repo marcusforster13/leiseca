@@ -1,0 +1,42 @@
+{
+ "condutor_a": {
+  "arquivo": "personagens/condutor_a.glb",
+  "animacoes": [
+   "parada",
+   "falando",
+   "nervoso",
+   "sentado",
+   "sentado_falando",
+   "sentado_nervoso",
+   "soprando",
+   "irritado",
+   "andando"
+  ]
+ },
+ "condutor_b": {
+  "arquivo": "personagens/condutor_b.glb",
+  "animacoes": [
+   "parada",
+   "falando",
+   "nervoso",
+   "sentado",
+   "sentado_falando",
+   "sentado_nervoso",
+   "soprando"
+  ]
+ },
+ "condutor_c": {
+  "arquivo": "personagens/condutor_c.glb",
+  "animacoes": [
+   "parada",
+   "falando",
+   "nervoso",
+   "sentado",
+   "sentado_falando",
+   "sentado_nervoso",
+   "soprando",
+   "irritado",
+   "andando"
+  ]
+ }
+}

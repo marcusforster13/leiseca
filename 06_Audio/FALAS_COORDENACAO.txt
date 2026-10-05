@@ -1,0 +1,27 @@
+﻿OPERAÇÃO LEI SECA — FALAS: COORDENAÇÃO (RÁDIO)
+============================================================
+
+Voz de rádio, firme e curta, sem emoção.
+
+Como gravar:
+- Um arquivo por fala, com o nome indicado (.wav ou .mp3).
+- Salvar em 06_Audio\brutos\ (ou mandar para o Claude).
+- Falar exatamente o texto (é por ele que o site encontra a gravação).
+- ~0,5 s de silêncio no começo e no fim. O tempo é só referência.
+
+------------------------------------------------------------
+
+[ ]  1.  "Agente, veículo selecionado entrando na faixa de abordagem."
+      Quando: Início de cada atendimento
+      Tempo: 3–5 s     Arquivo: fala_coordenacao_01
+
+[ ]  2.  "Copiado. Os policiais assumem a condução do condutor à delegacia, com o auto e o resultado impresso."
+      Quando: Caso de crime
+      Tempo: 7–10 s     Arquivo: fala_coordenacao_02
+
+[ ]  3.  "Copiado. Guincho acionado para remoção ao depósito."
+      Quando: Remoção do veículo
+      Tempo: 3–4 s     Arquivo: fala_coordenacao_03
+
+------------------------------------------------------------
+Total: 3 falas ([x] = já gravada).

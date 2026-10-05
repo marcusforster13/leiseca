@@ -1,0 +1,79 @@
+﻿OPERAÇÃO LEI SECA — FALAS: CONDUTOR
+============================================================
+
+Motorista parado na blitz, falando pela janela do carro. Grave as mesmas falas com uma voz masculina e uma feminina (os condutores são sorteados). Tom conforme a indicação: colaborativo, nervoso ou irritado.
+
+Como gravar:
+- Um arquivo por fala, com o nome indicado (.wav ou .mp3).
+- Salvar em 06_Audio\brutos\ (ou mandar para o Claude).
+- Falar exatamente o texto (é por ele que o site encontra a gravação).
+- ~0,5 s de silêncio no começo e no fim. O tempo é só referência.
+
+------------------------------------------------------------
+
+[ ]  1.  "Boa noite. Tudo bem, pode falar."
+      Quando: Resposta ao cumprimento (colaborativo)
+      Tempo: 3–4 s     Arquivo: fala_condutor_01
+
+[ ]  2.  "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa."
+      Quando: Resposta ao cumprimento (nervoso)
+      Tempo: 5–7 s     Arquivo: fala_condutor_02
+
+[ ]  3.  "De novo isso? Eu tô com pressa, hein."
+      Quando: Resposta ao cumprimento (hostil)
+      Tempo: 3–5 s     Arquivo: fala_condutor_03
+
+[ ]  4.  "Pronto, desliguei."
+      Quando: Ao desligar o motor
+      Tempo: 1–2 s     Arquivo: fala_condutor_04
+
+[ ]  5.  "Tá aqui, ó."
+      Quando: Ao entregar os documentos
+      Tempo: 1–2 s     Arquivo: fala_condutor_05
+
+[ ]  6.  "Tudo bem, eu faço."
+      Quando: Aceita o teste
+      Tempo: 2–2 s     Arquivo: fala_condutor_06
+
+[ ]  7.  "Tá… eu tomei só uma no almoço. Mas eu faço."
+      Quando: Aceita o teste, nervoso
+      Tempo: 5–7 s     Arquivo: fala_condutor_07
+
+[ ]  8.  "Não vou soprar nada, não. Eu conheço os meus direitos."
+      Quando: Recusa o teste
+      Tempo: 4–6 s     Arquivo: fala_condutor_08
+
+[ ]  9.  "Pode multar. Eu não sopro."
+      Quando: Depois de informado sobre a recusa
+      Tempo: 2–3 s     Arquivo: fala_condutor_09
+
+[ ] 10.  "Falei que não tinha bebido."
+      Quando: Resultado 0,00
+      Tempo: 2–3 s     Arquivo: fala_condutor_10
+
+[ ] 11.  "Mas foi só uma cerveja…"
+      Quando: Resultado de infração
+      Tempo: 3–4 s     Arquivo: fala_condutor_11
+
+[ ] 12.  "Não… esse aparelho tá errado."
+      Quando: Resultado de crime
+      Tempo: 3–4 s     Arquivo: fala_condutor_12
+
+[ ] 13.  "Obrigado. Boa noite."
+      Quando: Despedida, liberado
+      Tempo: 1–2 s     Arquivo: fala_condutor_13
+
+[ ] 14.  "Tá bom… boa noite."
+      Quando: Despedida, autuado
+      Tempo: 2–3 s     Arquivo: fala_condutor_14
+
+[ ] 15.  "Isso é um absurdo. Eu vou recorrer."
+      Quando: Despedida, hostil
+      Tempo: 3–4 s     Arquivo: fala_condutor_15
+
+[ ] 16.  "Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo."
+      Quando: Modo exploração (antes de iniciar o treinamento)
+      Tempo: 5–6 s     Arquivo: fala_condutor_16
+
+------------------------------------------------------------
+Total: 16 falas ([x] = já gravada).

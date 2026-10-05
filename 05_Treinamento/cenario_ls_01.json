@@ -1,0 +1,238 @@
+{
+  "id": "ls_01",
+  "titulo": "Operação Lei Seca — abordagem, teste do etilômetro e decisão",
+  "versao": "0.1",
+  "status": "rascunho para validação (itens com validar=true dependem do procedimento da coordenação da operação)",
+  "aprovacao": { "pontos_minimos": 70, "sem_falha_grave": true, "validar": true },
+
+  "base_legal": {
+    "_nota": "Resumo usado nos textos do treinamento. Conferir sempre com o texto oficial.",
+    "CTB art. 165": "Dirigir sob a influência de álcool: infração gravíssima, multa (10x) e suspensão do direito de dirigir por 12 meses; retenção do veículo.",
+    "CTB art. 165-A": "Recusar-se ao teste: mesmas penalidades e medidas do art. 165.",
+    "CTB art. 276": "Qualquer concentração de álcool sujeita o condutor às penalidades do art. 165.",
+    "CTB art. 277": "Teste, exame ou outro procedimento para certificar a influência de álcool; a recusa leva ao art. 165-A (§ 3º).",
+    "CTB art. 306": "Crime: conduzir com capacidade psicomotora alterada (0,3 mg/L de ar alveolar ou mais, ou sinais).",
+    "CTB art. 162, V": "Dirigir com a habilitação vencida há mais de 30 dias.",
+    "CTB art. 230, V": "Conduzir veículo que não esteja registrado e devidamente licenciado: remoção.",
+    "Res. Contran 1.031/2026": "Art. 4º triagem opcional e só indicativa · art. 5º, § 2º reteste por motivo técnico ou operacional · art. 7º, § 1º pelo menos dois sinais · art. 8º infração com medição de 0,05 mg/L ou mais; recusa · art. 9º crime com medição de 0,34 mg/L ou mais e encaminhamento à Polícia Judiciária · art. 10 conteúdo do auto · art. 11 retenção até condutor habilitado ou recolhimento ao depósito · art. 12 recolhimento da CNH dispensável. Revoga a Res. 432/2013."
+  },
+
+  "fases": [
+    { "id": "F1", "nome": "Recepção do veículo e segurança", "acoes": [
+      { "id": "sinalizar_parada", "texto": "Sinalizar a parada no ponto de abordagem", "pontos": 3 },
+      { "id": "posicao_segura", "texto": "Abordar pelo lado do motorista, dentro da área protegida", "pontos": 4, "validar": true }
+    ], "erros": [
+      { "id": "na_faixa_livre", "texto": "Abordar de dentro da faixa com trânsito", "pontos": -4 }
+    ]},
+    { "id": "F2", "nome": "Comunicação inicial", "acoes": [
+      { "id": "cumprimentar_identificar", "texto": "Cumprimentar, identificar-se e explicar a fiscalização", "pontos": 5 },
+      { "id": "pedir_desligar", "texto": "Pedir para desligar o motor e acender a luz interna", "pontos": 2, "validar": true },
+      { "id": "pedir_documentos", "texto": "Pedir a habilitação e o documento do veículo (físicos ou digitais)", "pontos": 3, "base": "CTB art. 159 e art. 133" }
+    ], "erros": [
+      { "id": "abordagem_hostil", "texto": "Abordagem hostil ou acusatória", "pontos": -4 },
+      { "id": "sem_identificacao", "texto": "Não se identificar nem explicar a fiscalização", "pontos": -2 }
+    ]},
+    { "id": "F3", "nome": "Documentos", "acoes": [
+      { "id": "conferir_cnh", "texto": "Conferir a habilitação e enquadrar corretamente", "pontos": 4, "base": "CTB art. 162" },
+      { "id": "conferir_crlv", "texto": "Conferir o licenciamento do veículo e enquadrar corretamente", "pontos": 3, "base": "CTB art. 230, V" }
+    ], "erros": [
+      { "id": "consulta_errada", "texto": "Erro na conferência de documentos", "pontos": -3 }
+    ]},
+    { "id": "F4", "nome": "Verificação de álcool", "acoes": [
+      { "id": "observar_sinais", "texto": "Observar e registrar os sinais do condutor", "pontos": 3, "base": "Res. Contran 1.031/2026, art. 7º e Anexo II" },
+      { "id": "convidar_teste", "texto": "Convidar ao teste com explicação clara, sem coagir", "pontos": 4, "base": "CTB art. 277" },
+      { "id": "informar_recusa", "texto": "Informar que a recusa é um direito e gera a infração do art. 165-A", "pontos": 5, "condicao": "variacao.condutor == 'recusa'", "base": "CTB art. 165-A e art. 277, § 3º" },
+      { "id": "bocal_novo", "texto": "Abrir um bocal novo, lacrado, na frente do condutor", "pontos": 4, "condicao": "variacao.condutor != 'recusa'", "validar": true },
+      { "id": "orientar_sopro", "texto": "Orientar o sopro contínuo", "pontos": 2, "condicao": "variacao.condutor != 'recusa'" },
+      { "id": "mostrar_resultado", "texto": "Mostrar o visor e informar o resultado ao condutor", "pontos": 3, "condicao": "variacao.condutor != 'recusa'" },
+      { "id": "descartar_bocal", "texto": "Descartar o bocal usado", "pontos": 1, "condicao": "variacao.condutor != 'recusa'" }
+    ], "falhas_graves": [
+      { "id": "coagir_teste", "texto": "Coagir ou ameaçar o condutor para fazer o teste", "pontos": -15, "base": "CTB art. 165-A: a recusa é infração administrativa, não crime" },
+      { "id": "bocal_reutilizado", "texto": "Reutilizar o bocal de outro condutor", "pontos": -15 }
+    ]},
+    { "id": "F5", "nome": "Enquadramento e registro", "acoes": [
+      { "id": "enquadramento_correto", "texto": "Enquadramento correto do resultado", "pontos": 10, "base": "CTB arts. 165, 165-A e 306; Res. Contran 1.031/2026, arts. 7º a 9º" },
+      { "id": "registrar_auto", "texto": "Lavrar o auto com os dados do aparelho, medição, valor considerado, sinais e recusa", "pontos": 4, "condicao": "variacao.autua == 'sim'", "base": "Res. Contran 1.031/2026, art. 10" },
+      { "id": "cnh_nao_recolher", "texto": "Não recolher a CNH (a suspensão segue processo próprio)", "pontos": 2, "condicao": "variacao.alcool == 'sim'", "base": "Res. Contran 1.031/2026, art. 12", "validar": true },
+      { "id": "acionar_pm_crime", "texto": "Acionar os policiais para a condução à Polícia Judiciária", "pontos": 4, "condicao": "variacao.condutor == 'alcool_crime'", "base": "CTB art. 306; Res. Contran 1.031/2026, art. 9º, § 2º" }
+    ], "erros": [
+      { "id": "enquadramento_errado", "texto": "Enquadramento incorreto", "pontos": -6 },
+      { "id": "recolheu_cnh", "texto": "Recolher a CNH sem necessidade", "pontos": -2, "validar": true }
+    ], "falhas_graves": [
+      { "id": "liberar_alcoolizado", "texto": "Liberar condutor alcoolizado ou que recusou o teste para seguir dirigindo", "pontos": -20, "base": "CTB art. 165 (retenção do veículo)" },
+      { "id": "prisao_por_recusa", "texto": "Dar voz de prisão apenas pela recusa ao teste", "pontos": -15, "base": "CTB art. 165-A" }
+    ]},
+    { "id": "F6", "nome": "Veículo e encerramento", "acoes": [
+      { "id": "veiculo_correto", "texto": "Destino correto do veículo (liberar, entregar a condutor apto ou remover)", "pontos": 6, "base": "CTB art. 270; Res. Contran 1.031/2026, art. 11" },
+      { "id": "fiscalizar_passageiro", "texto": "Fiscalizar o outro condutor antes de entregar o veículo", "pontos": 4, "condicao": "variacao.retem == 'sim' && variacao.passageiro != 'nenhum' && variacao.documentos != 'licenciamento_atrasado'", "base": "Res. Contran 1.031/2026, art. 11" },
+      { "id": "informar_defesa", "texto": "Explicar o que foi registrado e como apresentar defesa", "pontos": 3, "condicao": "variacao.autua == 'sim'", "base": "CTB arts. 280 a 282" },
+      { "id": "despedida_cordial", "texto": "Encerrar com cordialidade", "pontos": 2 }
+    ], "falhas_graves": [
+      { "id": "entregar_sem_fiscalizar", "texto": "Entregar o veículo a outra pessoa sem fiscalizá-la", "pontos": -15 },
+      { "id": "entregar_a_alcoolizado", "texto": "Entregar o veículo a pessoa que também bebeu", "pontos": -15 }
+    ]}
+  ],
+
+  "variacoes": {
+    "condutor": ["sobrio", "alcool_infracao", "alcool_crime", "recusa"],
+    "sinais": ["nenhum", "visiveis"],
+    "documentos": ["regular", "regular", "cnh_vencida", "licenciamento_atrasado"],
+    "passageiro": ["nenhum", "habilitado_sobrio", "habilitado_alcoolizado"],
+    "comportamento": ["colaborativo", "nervoso", "hostil"],
+    "modelo": ["condutor_a", "condutor_b", "condutor_c"]
+  },
+
+  "historia": [
+    { "titulo": "Atendimento 1 de 3 · Condutor regular", "texto": "Primeiro veículo da noite. Receba o condutor, confira os documentos, faça o teste e decida.",
+      "variacao": { "condutor": "sobrio", "sinais": "nenhum", "documentos": "regular", "passageiro": "nenhum", "comportamento": "colaborativo", "modelo": "condutor_c" } },
+    { "titulo": "Atendimento 2 de 3 · Resultado de álcool", "texto": "Preste atenção aos sinais, ao bocal e ao que fazer com o veículo: há uma passageira no carro.",
+      "variacao": { "condutor": "alcool_infracao", "sinais": "visiveis", "documentos": "regular", "passageiro": "habilitado_sobrio", "comportamento": "nervoso", "modelo": "condutor_a" } },
+    { "titulo": "Atendimento 3 de 3 · Recusa ao teste", "texto": "O condutor pode se recusar. Recusa não é crime e não autoriza prisão: informe, registre e decida o destino do veículo.",
+      "variacao": { "condutor": "recusa", "sinais": "nenhum", "documentos": "regular", "passageiro": "nenhum", "comportamento": "hostil", "modelo": "condutor_b" } }
+  ],
+
+  "etilometro": {
+    "_nota": "Valores de exemplo. Valor considerado = medição menos o erro máximo admissível (0,032 mg/L abaixo de 0,40; 8% de 0,40 a 2,00). validar com a tabela do Anexo I.",
+    "aparelho": "Etilômetro de treinamento · modelo ET-01 · série 000123 · verificação metrológica válida",
+    "sobrio": { "medido": "0,00", "considerado": "0,00" },
+    "alcool_infracao": { "medido": "0,18", "considerado": "0,14" },
+    "alcool_crime": { "medido": "0,52", "considerado": "0,47" },
+    "passageiro_alcoolizado": { "medido": "0,21", "considerado": "0,17" }
+  },
+
+  "sinais": {
+    "nenhum": "Fala clara, olhos normais, sem odor de álcool, movimentos firmes. Nenhum sinal de alteração.",
+    "visiveis": "Olhos vermelhos, odor de álcool no hálito e fala arrastada: três sinais de alteração (são necessários pelo menos dois)."
+  },
+
+  "dialogos": {
+    "abertura": [
+      { "fala": "Boa noite. Sou agente da Operação Lei Seca. Esta é uma fiscalização de trânsito, é rápido.", "acao": "cumprimentar_identificar" },
+      { "fala": "Documento.", "erro": "sem_identificacao", "feedback": "Cumprimente, diga quem você é e explique a fiscalização: isso reduz a tensão e a resistência." },
+      { "fala": "Desce do carro. Bebeu quanto hoje?", "erro": "abordagem_hostil", "feedback": "Não presuma culpa. A abordagem é igual para todos e começa pela identificação do agente." }
+    ],
+    "resposta_abertura": {
+      "colaborativo": "Boa noite. Tudo bem, pode falar.",
+      "nervoso": "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa.",
+      "hostil": "De novo isso? Eu tô com pressa, hein."
+    },
+    "motor": { "fala": "Por favor, desligue o motor e acenda a luz interna.", "resposta": "Pronto, desliguei." },
+    "documentos": { "fala": "Habilitação e documento do veículo, por favor. Pode ser no aplicativo.", "resposta": "Tá aqui, ó." },
+    "convite": [
+      { "fala": "Vou convidar o senhor a fazer o teste do etilômetro. É rápido, e o bocal é descartável e aberto na sua frente.", "acao": "convidar_teste" },
+      { "fala": "Sopra aqui. É obrigatório, senão eu levo o senhor preso.", "falha": "coagir_teste", "feedback": "Ninguém é obrigado a soprar. A recusa não é crime: gera a infração do art. 165-A, com as mesmas penalidades." },
+      { "fala": "Nem precisa de teste, tá na cara que bebeu.", "erro": "abordagem_hostil", "feedback": "A constatação por sinais exige pelo menos dois sinais registrados; ofereça o teste." }
+    ],
+    "resposta_convite": {
+      "aceita": "Tudo bem, eu faço.",
+      "aceita_nervoso": "Tá… eu tomei só uma no almoço. Mas eu faço.",
+      "recusa": "Não vou soprar nada, não. Eu conheço os meus direitos."
+    },
+    "recusa": [
+      { "fala": "É um direito seu. Só preciso informar: a recusa é infração gravíssima, com multa e suspensão, igual à de quem dirige alcoolizado (art. 165-A).", "acao": "informar_recusa" },
+      { "fala": "Se não soprar, vai preso por desobediência.", "falha": "coagir_teste", "feedback": "Recusa ao teste não é crime nem autoriza prisão. Informe a consequência administrativa e registre." },
+      { "fala": "Então tá, pode ir embora.", "falha": "liberar_alcoolizado", "feedback": "A recusa gera autuação pelo art. 165-A e retenção do veículo até a apresentação de condutor habilitado." }
+    ],
+    "resposta_recusa": "Pode multar. Eu não sopro.",
+    "bocal": [
+      { "fala": "Abrir um bocal novo, lacrado, na frente do condutor", "acao": "bocal_novo" },
+      { "fala": "Usar o bocal que já está no aparelho", "falha": "bocal_reutilizado", "feedback": "Cada teste usa um bocal novo, aberto na frente do condutor: higiene e validade do teste." }
+    ],
+    "sopro": [
+      { "fala": "Encha o peito e sopre de forma contínua, sem parar, até eu avisar.", "acao": "orientar_sopro" },
+      { "fala": "Sopra aí.", "feedback": "Explique como soprar: sopro curto ou interrompido invalida a medição e obriga a repetir." }
+    ],
+    "resposta_resultado": {
+      "sobrio": "Falei que não tinha bebido.",
+      "alcool_infracao": "Mas foi só uma cerveja…",
+      "alcool_crime": "Não… esse aparelho tá errado."
+    },
+    "decisao": [
+      { "id": "liberar", "fala": "Sem irregularidade por álcool: seguir para o encerramento" },
+      { "id": "art165", "fala": "Infração do art. 165: medição de 0,05 a 0,33 mg/L" },
+      { "id": "art165_crime", "fala": "Art. 165 + crime do art. 306: medição de 0,34 mg/L ou mais — Polícia Judiciária" },
+      { "id": "art165A", "fala": "Infração do art. 165-A: recusa ao teste, sem sinais" },
+      { "id": "art165_sinais", "fala": "Art. 165 pelos sinais (dois ou mais), com a recusa registrada" },
+      { "id": "prisao_recusa", "fala": "Voz de prisão pela recusa ao teste" }
+    ],
+    "decisao_explicacao": {
+      "liberar": "Medição abaixo de 0,05 mg/L e nenhum sinal: não há infração por álcool.",
+      "art165": "Medição de 0,05 mg/L ou mais caracteriza a infração do art. 165 (Res. 1.031/2026, art. 8º).",
+      "art165_crime": "Medição de 0,34 mg/L ou mais caracteriza também o crime do art. 306: condutor e testemunhas vão à Polícia Judiciária com as provas (art. 9º).",
+      "art165A": "Recusa sem sinais de alteração: infração do art. 165-A. Não é crime e não autoriza prisão.",
+      "art165_sinais": "Com pelo menos dois sinais, caracteriza-se a infração do art. 165 mesmo com a recusa (art. 7º, § 1º). Registre os sinais e a recusa no auto."
+    },
+    "auto": [
+      { "fala": "Lavrar o auto no tablet: aparelho (marca, modelo, série), medição, valor considerado, sinais e recusa", "acao": "registrar_auto" },
+      { "fala": "Só anotar a placa e seguir", "feedback": "O auto precisa dos dados do aparelho, da medição, do valor considerado, dos sinais e da recusa (Res. 1.031/2026, art. 10)." }
+    ],
+    "cnh": [
+      { "fala": "Não recolher a CNH: a suspensão segue processo próprio", "acao": "cnh_nao_recolher" },
+      { "fala": "Recolher a CNH agora", "erro": "recolheu_cnh", "feedback": "O recolhimento da CNH é dispensável (Res. 1.031/2026, art. 12); a suspensão é aplicada em processo administrativo." }
+    ],
+    "veiculo": [
+      { "id": "liberar", "fala": "Liberar: o próprio condutor segue viagem" },
+      { "id": "fiscalizar_passageiro", "fala": "Fiscalizar o passageiro (habilitação e teste) para ele assumir o volante" },
+      { "id": "entregar_direto", "fala": "Entregar a chave ao passageiro sem fiscalizar" },
+      { "id": "remover", "fala": "Acionar o guincho: remoção ao depósito" }
+    ],
+    "passageiro_resultado": {
+      "habilitado_sobrio": "Passageira: habilitação regular, etilômetro 0,00 mg/L.",
+      "habilitado_alcoolizado": "Passageira: habilitação regular, etilômetro 0,21 mg/L."
+    },
+    "passageiro_decisao": [
+      { "id": "entregar", "fala": "Entregar o veículo a ela" },
+      { "id": "remover", "fala": "Não entregar: acionar o guincho" }
+    ],
+    "encerramento": [
+      { "fala": "Explicar o que foi registrado, entregar a via e informar como apresentar defesa. Agradecer.", "acao": "despedida_cordial", "tambem": "informar_defesa" },
+      { "fala": "Obrigado pela colaboração. Boa noite e bom retorno.", "acao": "despedida_cordial" },
+      { "fala": "(Virar as costas e chamar o próximo)" }
+    ],
+    "resposta_encerramento": { "liberado": "Obrigado. Boa noite.", "autuado": "Tá bom… boa noite.", "hostil": "Isso é um absurdo. Eu vou recorrer." }
+  },
+
+  "documentos": {
+    "nomes": { "condutor_a": "RAFAEL MOURA TEIXEIRA", "condutor_b": "CAMILA DUARTE NOGUEIRA", "condutor_c": "ANTÔNIO CARLOS PACHECO" },
+    "cnh": [
+      { "id": "regular", "fala": "Habilitação regular" },
+      { "id": "vencida_30", "fala": "Vencida há mais de 30 dias — infração do art. 162, V" },
+      { "id": "vencida_menos", "fala": "Vencida há menos de 30 dias — sem infração, orientar a renovar" }
+    ],
+    "crlv": [
+      { "id": "regular", "fala": "Licenciamento em dia" },
+      { "id": "atrasado", "fala": "Licenciamento em atraso — art. 230, V, com remoção do veículo" }
+    ]
+  },
+
+  "radio": {
+    "inicio": "Agente, veículo selecionado entrando na faixa de abordagem.",
+    "crime": "Copiado. Os policiais assumem a condução do condutor à delegacia, com o auto e o resultado impresso.",
+    "guincho": "Copiado. Guincho acionado para remoção ao depósito."
+  },
+
+  "vozes": {
+    "_nota": "Falas com voz gravada: salve 06_Audio/brutos/<arquivo>.wav ou .mp3. Sem arquivo, o site usa a voz sintética. O texto precisa ser igual ao que o site fala (é por ele que a gravação é encontrada).",
+    "falas": [
+      {"arquivo": "fala_condutor_01", "personagem": "Condutor", "quando": "Resposta ao cumprimento (colaborativo)", "texto": "Boa noite. Tudo bem, pode falar."},
+      {"arquivo": "fala_condutor_02", "personagem": "Condutor", "quando": "Resposta ao cumprimento (nervoso)", "texto": "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa."},
+      {"arquivo": "fala_condutor_03", "personagem": "Condutor", "quando": "Resposta ao cumprimento (hostil)", "texto": "De novo isso? Eu tô com pressa, hein."},
+      {"arquivo": "fala_condutor_04", "personagem": "Condutor", "quando": "Ao desligar o motor", "texto": "Pronto, desliguei."},
+      {"arquivo": "fala_condutor_05", "personagem": "Condutor", "quando": "Ao entregar os documentos", "texto": "Tá aqui, ó."},
+      {"arquivo": "fala_condutor_06", "personagem": "Condutor", "quando": "Aceita o teste", "texto": "Tudo bem, eu faço."},
+      {"arquivo": "fala_condutor_07", "personagem": "Condutor", "quando": "Aceita o teste, nervoso", "texto": "Tá… eu tomei só uma no almoço. Mas eu faço."},
+      {"arquivo": "fala_condutor_08", "personagem": "Condutor", "quando": "Recusa o teste", "texto": "Não vou soprar nada, não. Eu conheço os meus direitos."},
+      {"arquivo": "fala_condutor_09", "personagem": "Condutor", "quando": "Depois de informado sobre a recusa", "texto": "Pode multar. Eu não sopro."},
+      {"arquivo": "fala_condutor_10", "personagem": "Condutor", "quando": "Resultado 0,00", "texto": "Falei que não tinha bebido."},
+      {"arquivo": "fala_condutor_11", "personagem": "Condutor", "quando": "Resultado de infração", "texto": "Mas foi só uma cerveja…"},
+      {"arquivo": "fala_condutor_12", "personagem": "Condutor", "quando": "Resultado de crime", "texto": "Não… esse aparelho tá errado."},
+      {"arquivo": "fala_condutor_13", "personagem": "Condutor", "quando": "Despedida, liberado", "texto": "Obrigado. Boa noite."},
+      {"arquivo": "fala_condutor_14", "personagem": "Condutor", "quando": "Despedida, autuado", "texto": "Tá bom… boa noite."},
+      {"arquivo": "fala_condutor_15", "personagem": "Condutor", "quando": "Despedida, hostil", "texto": "Isso é um absurdo. Eu vou recorrer."},
+      {"arquivo": "fala_condutor_16", "personagem": "Condutor", "quando": "Modo exploração (antes de iniciar o treinamento)", "texto": "Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo."},
+      {"arquivo": "fala_coordenacao_01", "personagem": "Coordenação (rádio)", "quando": "Início de cada atendimento", "texto": "Agente, veículo selecionado entrando na faixa de abordagem."},
+      {"arquivo": "fala_coordenacao_02", "personagem": "Coordenação (rádio)", "quando": "Caso de crime", "texto": "Copiado. Os policiais assumem a condução do condutor à delegacia, com o auto e o resultado impresso."},
+      {"arquivo": "fala_coordenacao_03", "personagem": "Coordenação (rádio)", "quando": "Remoção do veículo", "texto": "Copiado. Guincho acionado para remoção ao depósito."}
+    ]
+  }
+}
