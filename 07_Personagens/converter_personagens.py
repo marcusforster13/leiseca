@@ -272,8 +272,8 @@ def reduzir(img, nome, dados):
     import numpy as np
     w, h = img.size
     px = np.empty(w * h * 4, np.float32); img.pixels.foreach_get(px)      # forca a leitura dos pixels
-    if w > 1024:
-        f = w // 1024
+    if True:                                                             # sempre copia para uma imagem nova (salvar a original em outro caminho falha)
+        f = max(1, w // 1024)
         px = px.reshape(h, w, 4)[::f, ::f].copy()                        # reduz 2048 -> 1024
         w, h = px.shape[1], px.shape[0]
         nova = bpy.data.images.new(nome, w, h, alpha=True)
