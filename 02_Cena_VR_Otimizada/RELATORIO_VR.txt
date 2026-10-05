@@ -1,30 +1,30 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 128417 tris | 19 malhas | 121 slots de material (~draw calls) | 16 luzes
+DEPOIS: 127944 tris | 23 malhas | 103 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
   03_Arvores_Postes                     53276
-  06_Veiculos_Apoio                     26166
+  06_Veiculos_Apoio                     23220
+  07_Carro_Regularizacao                15072
   05_Cones_Barreiras                    13046
-  07_Carro_Regularizacao                10132
-  10_Carro_Abordado                     10094
   04_Blitz_Estrutura                     8686
+  10_Carro_Abordado                      7627
   02_Predios                             4164
   08_Interativos                         1496
   01_Rua                                 1357
 
 Etapas:
   - Grama instanciada removida de 0 gramados; subdivisao=1, remesh 0.16 m, decimate 35% na folhagem.
-  - Modificadores aplicados em 1141 objetos; textos e fios convertidos em malha.
+  - Modificadores aplicados em 875 objetos; textos e fios convertidos em malha.
   - Bake de 0 materiais procedurais em texturas de imagem.
-  - 12 materiais com texturas CC0 convertidos para UV + PNG (cor, rugosidade, normal).
+  - 11 materiais com texturas CC0 convertidos para UV + PNG (cor, rugosidade, normal).
   - UVs em caixa (escala real em metros) aplicadas em todas as malhas.
-  - Colisao: 345 caixas orientadas preparadas.
+  - Colisao: 234 caixas orientadas preparadas.
   - 6 conjuntos interativos unidos (1 malha por conjunto).
-  - 1047 objetos estaticos unidos em 1 malha por colecao (menos draw calls).
+  - 832 objetos estaticos unidos em 1 malha por colecao (menos draw calls).
   - Exportado: blitz_lei_seca_VR.glb
   - Exportado: blitz_lei_seca_VR.fbx
-  - Colisao: 345 caixas, 4140 tris -> colisao.glb / colisao.fbx
+  - Colisao: 234 caixas, 2808 tris -> colisao.glb / colisao.fbx
 
 Proximos passos no motor (Unity/Unreal):
   - Iluminacao: marcar a geometria estatica como Static e fazer bake de lightmaps

@@ -20,3 +20,7 @@ _cache_texturas/
 __pycache__/
 Thumbs.db
 desktop.ini
+
+# pacotes originais dos carros (baixados do Sketchfab; os .glb por veiculo ficam em modelos/carros)
+01_Cena_Render_Cycles/modelos/_fontes/
+01_Cena_Render_Cycles/modelos/*.zip

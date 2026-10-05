@@ -59,7 +59,7 @@
     <button id="bMin" type="button">Recolher</button>
   </div>
   <p class="count"><span id="count">0</span> marcadores lidos</p>
-  <p class="help"><b>Se beber, não dirija.</b> Base: CTB arts. 165, 165-A, 277 e 306 · Res. Contran 1.031/2026</p>
+  <p class="help"><b>Se beber, não dirija.</b> Base: CTB arts. 165, 165-A, 277 e 306 · Res. Contran 1.031/2026<br>Veículos: Comrade1280 (Sketchfab, CC-BY 4.0), modificados · Texturas: Poly Haven (CC0) · Personagens: Microsoft Rocketbox (MIT)</p>
 </aside>
 <div id="statusTrein" hidden></div>
 <div id="legendaHTML" hidden></div>
@@ -159,7 +159,8 @@ const lmMats = [], lentes = [], colisores = [];
 // objetos que se movem (carro abordado, equipamentos, personagens) nao tem lightmap: recebem uma luz ambiente
 // uniforme, na intensidade da area iluminada pelas torres (um "lightmap" branco de 1 pixel)
 const lmBranco = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); lmBranco.needsUpdate = true; lmBranco.channel = 0;
-const iluminar = m => { if (!m.lightMap) { m.lightMap = lmBranco; m.lightMapIntensity = CFG.luz_dinamica ?? 1.1; } return m; };
+const iluminar = m => { if (m.metalness > .25) m.metalness = .25;      // metal espelha o ceu escuro e fica preto a noite
+  if (!m.lightMap) { m.lightMap = lmBranco; m.lightMapIntensity = CFG.luz_dinamica ?? 1.1; } return m; };
 gltf.scene.traverse(o => {
   if (!o.isMesh) return;
   let p = o, lm = null, estatico = false;

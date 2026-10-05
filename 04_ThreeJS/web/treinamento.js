@@ -391,6 +391,7 @@ export async function iniciar(ctx) {
   const PARADA = carro.position.clone(), ENTRADA = PARADA.clone(); ENTRADA.x -= 22;
   const SAIDA = [[PARADA.x + 5, PARADA.z + .2], [PARADA.x + 11.5, 1.2], [PARADA.x + 18, 1.75], [46, 1.75]];   // sai pela faixa livre
   const C = { rota: [], vel: 0, vmax: 5, frear: false, aoChegar: null };
+  const rodas = []; carro.traverse(o => { if (/_Roda_[DT][ED]$/.test(o.name)) rodas.push(o); });       // rodas soltas: giram conforme o carro anda
   function moverCarro(dt) {
     if (!C.rota.length) return;
     const alvo = C.rota[0]; V.set(alvo[0] - carro.position.x, 0, alvo[1] - carro.position.z);
@@ -404,6 +405,7 @@ export async function iniciar(ctx) {
       return;
     }
     V.multiplyScalar(1 / L); carro.position.addScaledVector(V, passo);
+    for (const r of rodas) r.rotation.z -= passo / .3;
     let d = Math.atan2(-V.z, V.x) - carro.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
     carro.rotation.y += d * Math.min(1, dt * 3);
   }
@@ -412,11 +414,11 @@ export async function iniciar(ctx) {
   function seguirCarro(n) {
     const u = n.userData; if (!u.assento) return;
     V.set(BANCO[0] - .04, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);
-    n.position.set(carro.position.x + V.x, BANCO[2] + .09 - .925 * (u.altura / 1.78), carro.position.z + V.z);
+    n.position.set(carro.position.x + V.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + V.z);
     n.rotation.y = carro.rotation.y + Math.PI / 2; n.visible = carro.visible;
   }
   function desembarcar(n, dx = 0) {
-    const u = n.userData; u.assento = 0; u.base = 'parada'; u.semVirar = false;
+    const u = n.userData; u.assento = 0; (u.mats || []).forEach(m => { m.clippingPlanes = null; m.needsUpdate = true; }); u.base = 'parada'; u.semVirar = false;
     n.position.set(carro.position.x + BANCO[0] + dx, 0, carro.position.z - 1.45); animar(n, 'parada', 1e6, .1);
   }
 
@@ -465,11 +467,15 @@ export async function iniciar(ctx) {
   }
 
   /* ================= personagens ================= */
+  // sentado no carro, o que fica abaixo do assoalho (canelas e pes) nao aparece por baixo da carroceria
+  const PLANO_ASSOALHO = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.24); renderer.localClippingEnabled = true;
   function limparNPCs() { Object.values(npcs).forEach(n => scene.remove(n)); for (const k in npcs) delete npcs[k]; }
   function novoNPC(papel, nome, lado) {
     const alt = papel === 'condutor_b' ? 1.66 : 1.78;
     const n = personagem(papel, nome, 0x3d4045, alt); n.userData.altura = alt;
-    n.userData.modelo?.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(m => ctx.iluminar(m.clone())) : ctx.iluminar(o.material.clone()); });
+    const mats = []; const prep = m => { const c = ctx.iluminar(m.clone()); c.clippingPlanes = [PLANO_ASSOALHO]; mats.push(c); return c; };
+    n.userData.modelo?.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(prep) : prep(o.material); });
+    n.userData.mats = mats;
     n.userData.assento = lado; n.userData.semVirar = true; n.userData.base = 'sentado';
     animar(n, 'sentado', 1e6, 0); seguirCarro(n); scene.add(n);
     return n;

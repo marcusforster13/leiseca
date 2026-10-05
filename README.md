@@ -39,6 +39,6 @@ Variação forçada pela URL: `?v=condutor:recusa,sinais:visiveis,passageiro:nen
 
 CTB arts. 165, 165-A, 276, 277 e 306; Resolução Contran nº 1.031/2026 (revogou a 432/2013). O conteúdo é um **rascunho para validação** com a coordenação da operação: ver `05_Treinamento/ROTEIRO_TREINAMENTO.md`.
 
-Sem logotipos e sem brasões oficiais: há espaços marcados `Brasao_(inserir_imagem_oficial)` para a imagem que o órgão estiver autorizado a usar. Texturas: Poly Haven (CC0). Personagens: Microsoft Rocketbox (MIT).
+Sem logotipos e sem brasões oficiais: há espaços marcados `Brasao_(inserir_imagem_oficial)` para a imagem que o órgão estiver autorizado a usar. Texturas: Poly Haven (CC0). Personagens: Microsoft Rocketbox (MIT). Veículos: "Generic passenger car pack" e "Generic civil service vehicles pack", de Comrade1280 (Sketchfab, CC-BY 4.0), modificados — ver `01_Cena_Render_Cycles/modelos/CREDITOS.md`.
 
 **Se beber, não dirija.**

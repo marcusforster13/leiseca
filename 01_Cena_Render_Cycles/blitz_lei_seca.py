@@ -619,27 +619,6 @@ def giroflex(R, col, x, z, larg=1.1):
     luz("Giroflex_Luz_Vermelha", "POINT", 0, "#ff1a10", (x, -.35, z + .2), col, R)
     luz("Giroflex_Luz_Azul", "POINT", 0, "#2050ff", (x, .35, z + .2), col, R)
 
-# ---- viatura da Policia Militar (apoio a seguranca)
-VTR, sy_, sx_, _ = veiculo("Viatura_PM", C_VEIC, (9.6, 5.45, 0), 0, EST_SUV, M["pint_pm"], M["faixa_pm"], "suv", placa="RJP0M19")
-giroflex(VTR, C_VEIC, -.25, 1.72)
-for lado in (1, -1):
-    v = "+y" if lado > 0 else "-y"
-    texto("Adesivo_Policia_Militar", "POLÍCIA\nMILITAR", .1, (-.62, sy_(-.62, .8, lado) + lado * .004, .8), v, M["texto_az"], C_VEIC, VTR)
-    texto("Adesivo_190", "190", .13, (-1.62, sy_(-1.62, .9, lado) + lado * .004, .9), v, M["texto_az"], C_VEIC, VTR)
-    y = sy_(.42, .78, lado)
-    cyl("Brasao_Imagem", .1, .1, .004, (.42, y + lado * .004, .78), M["brasao"], C_VEIC, VTR, rot=(PI / 2, 0, 0), seg=32)
-
-# ---- van de apoio
-VAN, sy_, sx_, _ = veiculo("Van_Apoio", C_VEIC, (0.4, 5.5, 0), 0, EST_VAN, M["pint_van"], M["azul_claro"], "van", aro=M["aro_aco"], placa="LSC4E26")
-for lado in (1, -1):
-    v = "+y" if lado > 0 else "-y"
-    y = sy_(-.9, 1.75, lado)
-    texto("Van_Texto_Lei_Seca", "LEI SECA", .42, (-.9, y + lado * .006, 1.75), v, M["texto_az"], C_VEIC, VAN)
-    texto("Van_Texto_Sub", "OPERAÇÃO DE FISCALIZAÇÃO", .1, (-.9, y + lado * .006, 1.36), v, M["texto_az"], C_VEIC, VAN)
-    cyl("Brasao_Imagem_Van", .16, .16, .004, (.95, sy_(.95, .95, lado) + lado * .004, .95), M["brasao"], C_VEIC, VAN, rot=(PI / 2, 0, 0), seg=32)
-box("Van_Ar_Condicionado", (1.1, .9, .22), (-.6, 0, 2.62), M["branco"], C_VEIC, VAN, bevel=.05)
-box("Van_Degrau", (.6, .28, .04), (-.2, -1.12, .3), M["metal"], C_VEIC, VAN)
-
 # ---- guincho plataforma
 def guincho(pos):
     R = vazio("Guincho", pos, C_VEIC); c = C_VEIC; n = "Guincho"
@@ -673,11 +652,143 @@ def guincho(pos):
     for sy in (-1, 1):
         texto(n + "_Texto", "REBOQUE", .16, (2.75, sy * 1.137, 1.05), "+y" if sy > 0 else "-y", M["texto_az"], c, R)
     return R
-guincho((20.2, 5.4, 0))
+
+# ---- veiculos de modelos prontos (modelos/carros/*.glb - Sketchfab, Comrade1280, CC-BY 4.0; ver modelos/CREDITOS.md)
+#      Se o .glb faltar, cai no veiculo gerado por codigo (funcao veiculo, acima).
+CARROS = os.path.join(AQUI, "modelos", "carros")
+
+def repintar(img, cor, nome):
+    """Troca a cor da pintura (pixels saturados da textura) mantendo sombras, frisos e detalhes."""
+    w, h = img.size; px = np.empty(w * h * 4, np.float32); img.pixels.foreach_get(px); px = px.reshape(-1, 4)
+    rgb = px[:, :3]; mx = rgb.max(1); mn = rgb.min(1); sat = (mx - mn) / np.maximum(mx, 1e-4)
+    m = (sat > .3) & (mx > .12)
+    if m.sum() < 100: return img
+    ref = np.median(mx[m]); k = np.clip(mx[m] / ref, 0, 1.6)[:, None]
+    rgb[m] = np.clip(np.array(lin(hx(cor)) if False else hx(cor), np.float32)[None, :] * k, 0, 1)
+    novo = bpy.data.images.new(nome, w, h, alpha=True); novo.pixels.foreach_set(px.ravel()); novo.pack()
+    return novo
+
+def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False):
+    """Importa modelos/carros/<arquivo>.glb com a frente para +X. Devolve (raiz, sup_y, sup_x, info) ou None se faltar."""
+    caminho = os.path.join(CARROS, arquivo + ".glb")
+    if not os.path.exists(caminho): return None
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=caminho)
+    novos = [o for o in bpy.data.objects if o not in antes]
+    R = next(o for o in novos if o.parent is None); R.name = nome
+    for o in novos:
+        for c in list(o.users_collection): c.objects.unlink(o)
+        col.objects.link(o)
+        if o is not R: o.name = nome + "_" + o.name.split(".")[0].replace("Roda_", "Roda_")
+    corpo = next(o for o in novos if o.type == "MESH" and "Carroceria" in o.name)
+    feitos = {}
+    for i, s in enumerate(corpo.material_slots):          # materiais proprios deste carro (UV do modelo e preservada no pipeline)
+        m = s.material.copy(); m.name = "Modelo_%s_%s" % (nome, s.material.name.split(".")[0]); s.material = m
+        b = next((n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+        tex = next((n for n in m.node_tree.nodes if n.type == "TEX_IMAGE" and n.outputs["Color"].is_linked and any(l.to_socket.name == "Base Color" for l in n.outputs["Color"].links)), None)
+        nm = m.name.lower()
+        if cor and tex and tex.image and not any(k in nm for k in ("glass", "optic", "decal")):
+            tex.image = feitos.setdefault(tex.image.name, repintar(tex.image, cor, "pintura_%s_%s" % (nome, tex.image.name)))
+        if "glass" in nm and b:
+            for l in list(b.inputs["Alpha"].links): m.node_tree.links.remove(l)
+            for l in list(b.inputs["Base Color"].links): m.node_tree.links.remove(l)
+            b.inputs["Base Color"].default_value = (.03, .045, .055, 1); b.inputs["Alpha"].default_value = .38 if interior else .8
+            b.inputs["Roughness"].default_value = .06; b.inputs["Metallic"].default_value = 0
+            for attr, val in (("surface_render_method", "BLENDED"), ("blend_method", "BLEND")):
+                try: setattr(m, attr, val)
+                except Exception: pass
+        if interior: m.use_backface_culling = False
+    me = corpo.data
+    bm = bmesh.new(); bm.from_mesh(me)
+    nomes = [s.material.name.lower() for s in corpo.material_slots]
+    apagar = [f for f in bm.faces if any(k in nomes[f.material_index] for k in tirar)]
+    vidro = [f for f in bm.faces if "glass" in nomes[f.material_index]]
+    esq = [f for f in vidro if f.normal.y > .55 and abs(f.normal.z) < .6]          # vidros laterais do lado do motorista (+Y)
+    info = {}
+    if esq:
+        xs = [f.calc_center_median().x for f in esq]; meio = (min(xs) + max(xs)) / 2
+        frente = [f for f in esq if f.calc_center_median().x > meio]
+        c = sum((f.calc_center_median() for f in frente), Vector()) / len(frente)
+        info["janela"] = c.copy()
+        if janela_aberta: apagar += frente
+    if apagar: bmesh.ops.delete(bm, geom=list(set(apagar)), context="FACES")
+    bm.to_mesh(me); bm.free()
+    R.location = pos; R.rotation_euler = (0, 0, rz)
+    bpy.context.view_layer.update()
+    pts = [Vector(c) for c in corpo.bound_box]
+    hw = max(abs(p.y) for p in pts); comp = max(p.x for p in pts) - min(p.x for p in pts); alt = max(p.z for p in pts)
+    info.update(hw=hw, comp=comp, alt=alt)
+    if interior and "janela" in info:                     # o modelo e oco: bancos, painel e assoalho simples
+        j = info["janela"]; xb = j.x - .18; zb = j.z - .62; yb = hw * .45
+        for sy in (-1, 1):
+            box(nome + "_Banco", (.5, .48, .1), (xb, sy * yb, zb), M["interior"], col, R, bevel=.04)
+            box(nome + "_Encosto", (.12, .46, .6), (xb - .3, sy * yb, zb + .34), M["interior"], col, R, rot=(0, .2, 0), bevel=.04)
+        box(nome + "_Banco_Tras", (.5, hw * 1.5, .1), (xb - .95, 0, zb + .02), M["interior"], col, R, bevel=.04)
+        box(nome + "_Encosto_Tras", (.12, hw * 1.5, .5), (xb - 1.22, 0, zb + .32), M["interior"], col, R, rot=(0, .2, 0), bevel=.04)
+        box(nome + "_Painel", (.3, hw * 1.55, .22), (xb + .78, 0, zb + .42), M["interior"], col, R, bevel=.05)
+        cyl(nome + "_Volante", .17, .17, .026, (xb + .52, yb, zb + .47), M["preto"], col, R, rot=(0, -1.15, 0), seg=18)
+        box(nome + "_Assoalho", (comp * .62, hw * 1.5, .03), (xb - .2, 0, zb - .28), M["preto"], col, R)
+        info["banco"] = [xb, yb, zb + .05]
+    ev = corpo.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    def sup_y(x, z, lado):
+        ok, lc, _, _ = ev.ray_cast(Vector((x, lado * 3.0, z)), Vector((0, -lado, 0)))
+        return lc.y if ok else lado * hw
+    def sup_x(y, z, ponta):
+        ok, lc, _, _ = ev.ray_cast(Vector((ponta * 6.0, y, z)), Vector((-ponta, 0, 0)))
+        return lc.x if ok else ponta * comp / 2
+    return R, sup_y, sup_x, info
+
+def faixa_lateral(nome, R, col, sup_y, x0, x1, z0, z1, m, n=24):
+    """Faixa pintada que acompanha a lateral do carro (dos dois lados)."""
+    for lado in (1, -1):
+        vs, fs = [], []
+        for i in range(n + 1):
+            x = x0 + (x1 - x0) * i / n
+            for z in (z0, z1): vs.append((x, sup_y(x, z, lado) + lado * .006, z))
+        for i in range(n): fs.append((2 * i, 2 * i + 2, 2 * i + 3, 2 * i + 1))
+        malha(nome, vs, fs, m, col, R)
+
+# ---- viatura da Policia Militar (apoio a seguranca): perua repintada de branco, faixa azul, giroflex
+r = carro_modelo("Viatura_PM", C_VEIC, "perua", (9.6, 5.45, 0), 0, cor="#eceded")
+if r:
+    VTR, sy_, sx_, inf = r
+    giroflex(VTR, C_VEIC, -.25, inf["alt"] + .03, larg=1.05)
+    faixa_lateral("Viatura_Faixa_Azul", VTR, C_VEIC, sy_, -1.85, 1.55, .5, .66, M["faixa_pm"])
+    for lado in (1, -1):
+        v = "+y" if lado > 0 else "-y"
+        texto("Adesivo_Policia_Militar", "POLÍCIA MILITAR", .085, (-.15, sy_(-.15, .82, lado) + lado * .008, .82), v, M["texto_az"], C_VEIC, VTR)
+        texto("Adesivo_190", "190", .12, (-1.55, sy_(-1.55, .84, lado) + lado * .008, .84), v, M["texto_az"], C_VEIC, VTR)
+        cyl("Brasao_Imagem", .09, .09, .004, (.95, sy_(.95, .82, lado) + lado * .006, .82), M["brasao"], C_VEIC, VTR, rot=(PI / 2, 0, 0), seg=28)
+else:
+    VTR, sy_, sx_, _ = veiculo("Viatura_PM", C_VEIC, (9.6, 5.45, 0), 0, EST_SUV, M["pint_pm"], M["faixa_pm"], "suv", placa="RJP0M19")
+    giroflex(VTR, C_VEIC, -.25, 1.72)
+
+# ---- van de apoio: van repintada de branco, sem o adesivo original, com LEI SECA
+r = carro_modelo("Van_Apoio", C_VEIC, "van", (0.4, 5.5, 0), 0, cor="#eeefef", tirar=("decal",))
+if r:
+    VAN, sy_, sx_, inf = r
+    faixa_lateral("Van_Faixa_Azul", VAN, C_VEIC, sy_, -2.45, 1.3, .62, .8, M["azul_claro"])
+    for lado in (1, -1):
+        v = "+y" if lado > 0 else "-y"
+        texto("Van_Texto_Lei_Seca", "LEI SECA", .36, (-.95, sy_(-.95, 1.3, lado) + lado * .01, 1.3), v, M["texto_az"], C_VEIC, VAN)
+        texto("Van_Texto_Sub", "OPERAÇÃO DE FISCALIZAÇÃO", .085, (-.95, sy_(-.95, 1.0, lado) + lado * .01, 1.0), v, M["texto_az"], C_VEIC, VAN)
+else:
+    veiculo("Van_Apoio", C_VEIC, (0.4, 5.5, 0), 0, EST_VAN, M["pint_van"], M["azul_claro"], "van", aro=M["aro_aco"], placa="LSC4E26")
+
+# ---- guincho plataforma
+if not carro_modelo("Guincho", C_VEIC, "guincho", (20.2, 5.4, 0), 0):
+    guincho((20.2, 5.4, 0))
 
 # ---- carro abordado (para no ponto de abordagem; janela do motorista aberta) e carro na regularizacao
-ABORD, _, _, corpo_ab = veiculo("Carro_Abordado", C_ABORD, (-7.0, 1.9, 0), 0, EST_HATCH, M["pint_cinza"], None, "hatch", janela_aberta=True, placa="KXR3B47")
-veiculo("Carro_Regularizacao", C_REG, (13.2, 1.75, 0), .04, EST_HATCH, M["pint_branca"], None, "hatch", placa="LTM8F02")
+r = carro_modelo("Carro_Abordado", C_ABORD, "hatch", (-7.0, 1.9, 0), 0, cor="#9a9da3", janela_aberta=True, interior=True)
+if r:
+    ABORD = r[0]; ABORD["banco"] = r[3].get("banco", [.1, .36, .35])
+else:
+    ABORD, _, _, corpo_ab = veiculo("Carro_Abordado", C_ABORD, (-7.0, 1.9, 0), 0, EST_HATCH, M["pint_cinza"], None, "hatch", janela_aberta=True, placa="KXR3B47")
+if not carro_modelo("Carro_Regularizacao", C_REG, "seda", (13.2, 1.75, 0), .04, cor="#e9e9e6"):
+    veiculo("Carro_Regularizacao", C_REG, (13.2, 1.75, 0), .04, EST_HATCH, M["pint_branca"], None, "hatch", placa="LTM8F02")
+# um veiculo estacionado do outro lado da via, para compor
+carro_modelo("Carro_Estacionado", C_REG, "suv", (-16.0, -5.75, 0), PI)
 
 # ================================================================== 7. EQUIPAMENTOS (interativos)
 # mesa de equipamentos ao lado do ponto de abordagem

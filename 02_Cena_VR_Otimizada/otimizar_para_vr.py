@@ -238,7 +238,7 @@ def box_uv(ob):
     mats = me.materials
     for f in bm.faces:
         mn = mats[f.material_index].name if f.material_index < len(mats) and mats[f.material_index] else ""
-        if mn in UV_NATIVE and had:
+        if (mn in UV_NATIVE or mn.startswith("Modelo_")) and had:      # modelos prontos mantem a UV original
             continue
         t = MAT_TILE.get(mn, 1.0)
         n = f.normal; ax = max(range(3), key=lambda i: abs(n[i]))
@@ -282,7 +282,7 @@ n_conj = 0
 for cn in ("08_Interativos", "10_Carro_Abordado"):
     col = bpy.data.collections.get(cn)
     for raiz in [o for o in (col.objects if col else []) if o.parent is None and o.type == "EMPTY"]:
-        objs = [o for o in raiz.children_recursive if o.type == "MESH"]
+        objs = [o for o in raiz.children_recursive if o.type == "MESH" and "_Roda_" not in o.name]   # rodas ficam soltas para girar
         if not objs:
             continue
         for o in objs:
@@ -291,7 +291,7 @@ for cn in ("08_Interativos", "10_Carro_Abordado"):
         if len(objs) > 1:
             with bpy.context.temp_override(active_object=alvo, selected_objects=objs, selected_editable_objects=objs):
                 bpy.ops.object.join()
-        for o in list(raiz.children_recursive):
+        for o in [o for o in raiz.children_recursive if "_Roda_" not in o.name]:
             bpy.data.objects.remove(o, do_unlink=True)
         alvo.name = raiz.name + "_Malha"; alvo.data.name = alvo.name
         mw = alvo.matrix_world.copy(); alvo.parent = raiz; alvo.matrix_world = mw
