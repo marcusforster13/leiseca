@@ -280,10 +280,11 @@ export async function iniciar(ctx) {
       else if (/_LEye$/.test(o.name)) olhoE = o; else if (/_REye$/.test(o.name)) olhoD = o; });
     if (!(cabeca && olhoE && olhoD)) return null;
     // base de cada osso: se a animacao nao mexe nele (trilha constante removida na exportacao), o giro nao pode acumular
-    const ossos = [pescoco, cabeca].filter(Boolean).map(b => ({ b, base: b.quaternion.clone(), escrito: null }));
+    const clavs = pescoco ? pescoco.children.filter(b => /Clavicle$/.test(b.name)) : [];
+    const ossos = [pescoco, cabeca, ...clavs].filter(Boolean).map(b => ({ b, base: b.quaternion.clone(), escrito: null }));
     m.updateMatrixWorld(true);
     const frenteLocal = new THREE.Vector3(0, 0, 1).applyQuaternion(cabeca.getWorldQuaternion(new THREE.Quaternion()).invert());
-    return { cabeca, pescoco, olhoE, olhoD, ossos, frenteLocal, peso: 0 };
+    return { cabeca, pescoco, olhoE, olhoD, ossos, clavs, frenteLocal, peso: 0 };
   }
   const OV1 = new THREE.Vector3(), OV2 = new THREE.Vector3(), OV3 = new THREE.Vector3(), OQ1 = new THREE.Quaternion(), OQ2 = new THREE.Quaternion(), OQ3 = new THREE.Quaternion(), OQ0 = new THREE.Quaternion();
   const AH = new THREE.Vector3();
@@ -307,7 +308,7 @@ export async function iniciar(ctx) {
   }
   function olhar(n, dt, posPolicial) {
     const o = n.userData.olhar; if (!o) return;
-    const perto = n.visible && !n.userData.destino && n.position.distanceTo(OV1.copy(posPolicial).setY(n.position.y)) < 4.5;
+    const perto = n.visible && !n.userData.destino && n.position.distanceTo(OV1.copy(posPolicial).setY(n.position.y)) < (n.userData.assento ? 6.5 : 4.5);
     o.peso += ((perto ? 1 : 0) - o.peso) * Math.min(1, dt * 2.5);
     for (const x of o.ossos) {                            // parte da pose da animacao deste quadro (ou da base)
       if (x.escrito && x.b.quaternion.equals(x.escrito)) x.b.quaternion.copy(x.base); else x.base.copy(x.b.quaternion);
@@ -315,11 +316,15 @@ export async function iniciar(ctx) {
     }
     if (o.peso < .01) return;
     n.updateMatrixWorld(true);
-    for (const [osso, fr, max] of [[o.pescoco, .4, .55], [o.cabeca, 1, .75]]) {
+    const ombros = o.clavs.map(b => b.getWorldQuaternion(new THREE.Quaternion()));     // orientacao dos ombros antes de girar o pescoco
+    // sentado no carro, o agente fica de lado: pescoco e cabeca giram bem mais para encarar quem aborda
+    const limites = n.userData.assento ? [[o.pescoco, .5, .85], [o.cabeca, 1, 1.15]] : [[o.pescoco, .4, .55], [o.cabeca, 1, .75]];
+    for (const [osso, fr, max] of limites) {
       if (!osso) continue;
       const frente = frenteCabeca(o).clone(), alvo = OV2.copy(posPolicial).sub(OV1).normalize();
       girarNoMundo(osso, OQ0.clone().setFromUnitVectors(frente, alvo), fr * o.peso, max);
     }
+    if (o.pescoco) o.clavs.forEach((b, i) => { o.pescoco.getWorldQuaternion(OQ1); b.quaternion.copy(OQ1.invert().multiply(ombros[i])); b.updateMatrixWorld(true); });   // ombros e bracos ficam onde estavam
     for (const x of o.ossos) x.escrito = x.b.quaternion.clone();
   }
   function animarRosto(n, dt, agora) {
@@ -415,10 +420,11 @@ export async function iniciar(ctx) {
   }
   // bancos: CFG.banco = [x, y, z] no espaco do carro no Blender (frente +X, esquerda +Y) -> lado = 1 motorista, -1 passageiro
   const BANCO = CFG.banco || [.2, .36, .5];
+  const VB = new THREE.Vector3();                         // proprio: o V do quadro guarda a posicao do agente
   function seguirCarro(n) {
     const u = n.userData; if (!u.assento) return;
-    V.set(BANCO[0] + .08, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);      // um pouco a frente no banco: o braco sai pelo meio da janela
-    n.position.set(carro.position.x + V.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + V.z);
+    VB.set(BANCO[0] + .08, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);      // um pouco a frente no banco: o braco sai pelo meio da janela
+    n.position.set(carro.position.x + VB.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + VB.z);
     n.rotation.y = carro.rotation.y + Math.PI / 2; n.visible = carro.visible;
   }
   // porta do motorista (peca separada no modelo, com a origem na dobradica)
