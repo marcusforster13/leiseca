@@ -14,6 +14,7 @@ Fonte: **freesound.org**, só sons com licença **Creative Commons 0** (uso livr
 | `radio_bip` | Bipe de rádio antes das falas da coordenação | "Walkie Talkie - Roger Beep", bruce965, som 321906 |
 | `radio_chiado` | Chiado de rádio (baixado, ainda não usado) | "Walkie_Talkie_Static", crcavol, som 154654 |
 | `porta_carro` | Porta do carro abrindo e depois fechando (o site toca cada trecho na hora certa) | "Car Door (Open and Close)", Yin_Yang_Jake007, som 416963 |
+| `sopro` | Sopro contínuo, tocado durante o teste do etilômetro (o site emenda dois trechos) | "Blowing Air", aldenroth2, som 272018 |
 
 ## Falta
 

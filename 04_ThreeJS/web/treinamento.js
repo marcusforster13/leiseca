@@ -501,10 +501,10 @@ export async function iniciar(ctx) {
   function alvoBoca(pos, quat) {
     const o = npcs.condutor?.userData.olhar; if (!o) return false;
     EZ.copy(frenteCabeca(o));                               // frente do rosto; OV1 fica entre os olhos
-    EB.copy(OV1); EB.y -= .078; EB.addScaledVector(EZ, .045);          // boca
+    EB.copy(OV1); EB.y -= .092; EB.addScaledVector(EZ, .032);          // boca
     // o aparelho vem do lado do agente (pela janela): fica entre a boca e quem segura, puxando um pouco para a frente do rosto
     camera.getWorldPosition(EX); EX.sub(EB); EX.y *= .25; EX.normalize(); EZ.multiplyScalar(.45).add(EX).normalize();
-    pos.copy(EB).addScaledVector(EZ, .2);
+    pos.copy(EB).addScaledVector(EZ, .178);              // a ponta do bocal (a 18,7 cm do centro do aparelho) entra um pouco na boca
     EYv.set(0, 1, 0).addScaledVector(EZ, -EZ.y).normalize(); EX.crossVectors(EYv, EZ);
     quat.setFromRotationMatrix(EM.makeBasis(EX, EYv, EZ));
     return true;
@@ -810,6 +810,8 @@ export async function iniciar(ctx) {
     legenda('Etilômetro', 'Soprando… aguarde a leitura.', 3.6);
     { const c = npcs.condutor; if (c) c.userData.soprando = true; if (c?.userData.assento) animar(c, 'sentado', 5.5, .3); }      // para de olhar em volta: fica de frente para o aparelho
     visorTexto('SOPRE'); levarABoca();
+    for (const [ms, trecho] of [[750, { ini: .15, dur: 1.9 }], [2150, { ini: .15 }]])       // som do sopro, em dois trechos emendados (~3 s)
+      setTimeout(() => { const c = npcs.condutor; if (c?.userData.soprando) window.__som?.tocar('sopro', c.position.clone().setY(1.2), false, trecho); }, ms);
     setTimeout(() => {
       if (!A) return;
       bip(); A.testado = true; A.resultado = r; A.bocalUsado = true; fecharPaineis();

@@ -16,7 +16,9 @@ const DEF = {
   sirene_longe:        { tipo: 'evento', vol: .4 },
   radio_chiado:        { tipo: 'evento', vol: .3 },
   radio_bip:           { tipo: 'evento', vol: .6 },
-  bip_etilometro:      { tipo: 'evento', vol: .7 }
+  bip_etilometro:      { tipo: 'evento', vol: .7 },
+  porta_carro:         { tipo: 'evento', vol: .6 },
+  sopro:               { tipo: 'evento', vol: .8 }
 };
 
 export async function iniciarAudio({ scene, camera, renderer }) {
