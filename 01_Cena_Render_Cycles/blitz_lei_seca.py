@@ -255,7 +255,7 @@ if os.path.exists(_logo_png):
         try: setattr(LOGO, _attr, _val)
         except Exception: pass
 
-def adesivo(name, ponto, nu, nv, col, parent=None, pos=(0, 0, 0)):
+def adesivo(name, ponto, nu, nv, col, parent=None, pos=(0, 0, 0), mat=None):
     """Adesivo com o logotipo sobre uma superficie curva: ponto(u, v) devolve a posicao 3D para u, v de 0 a 1."""
     bm = bmesh.new(); uvl = bm.loops.layers.uv.new("UVMap")
     g = [[bm.verts.new(ponto(i / nu, j / nv)) for j in range(nv + 1)] for i in range(nu + 1)]
@@ -264,7 +264,7 @@ def adesivo(name, ponto, nu, nv, col, parent=None, pos=(0, 0, 0)):
             f = bm.faces.new((g[i][j], g[i + 1][j], g[i + 1][j + 1], g[i][j + 1]))
             for lp, (a, b) in zip(f.loops, ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))):
                 lp[uvl].uv = (a / nu, b / nv)
-    ob = finish(name, bm, pos, LOGO, col, parent, smooth=True)
+    ob = finish(name, bm, pos, mat or LOGO, col, parent, smooth=True)
     return ob
 
 def logo_lateral(name, R, col, sup_y, xc, zc, larg):
@@ -284,6 +284,21 @@ def logo_balao(raiz, R, zc, larg=2.5):
             r = math.sqrt(max(.01, R * R - z * z)) + .015
             return (r * math.sin(a) * (-sgn), sgn * r * math.cos(a), z)
         adesivo("Balao_Logo", ponto, 24, 8, C_BLITZ, raiz, (0, 0, zc))
+
+# versao clara do logotipo (letras brancas), para fundos escuros como a lona azul da tenda
+LOGO_CLARO = None
+if LOGO:
+    _w, _h = _img.size; _px = np.empty(_w * _h * 4, np.float32); _img.pixels.foreach_get(_px); _px = _px.reshape(-1, 4)
+    _px[:, :3] = .94
+    _img2 = bpy.data.images.new("logo_lei_seca_claro", _w, _h, alpha=True); _img2.pixels.foreach_set(_px.ravel()); _img2.pack()
+    LOGO_CLARO = LOGO.copy(); LOGO_CLARO.name = "Logo_Lei_Seca_Claro"
+    next(n for n in LOGO_CLARO.node_tree.nodes if n.type == "TEX_IMAGE").image = _img2
+
+DIR_U = {"-y": (1, 0, 0), "+y": (-1, 0, 0), "-x": (0, -1, 0), "+x": (0, 1, 0)}      # para onde o logo "corre" visto de cada lado
+def logo_plano(name, centro, virado, larg, col, parent=None, mat=None):
+    """Logotipo numa superficie plana vertical (placas, saia da tenda), legivel de quem esta do lado 'virado'."""
+    alt = larg / LOGO_PROP; du = Vector(DIR_U[virado]); c = Vector(centro)
+    return adesivo(name, lambda u, v: c + du * (u - .5) * larg + Vector((0, 0, (v - .5) * alt)), 1, 1, col, parent, mat=mat)
 
 # ================================================================== 1. RUA
 RUA_X = 46.0
@@ -420,7 +435,7 @@ def tenda(x, y):
     for (ax, ay, tam, virado) in ((0, -1, (2 * L + .14, .012, .3), "-y"), (0, 1, (2 * L + .14, .012, .3), "+y"),
                                   (-1, 0, (.012, 2 * L + .14, .3), "-x"), (1, 0, (.012, 2 * L + .14, .3), "+x")):
         box("Tenda_Saia", tam, (ax * (L + e), ay * (L + e), H - .15), M["azul"], C_BLITZ, r)
-        texto("Tenda_Texto", "LEI SECA", .19, (ax * (L + e + .009), ay * (L + e + .009), H - .15), virado, M["texto_br"], C_BLITZ, r)
+        (logo_plano("Tenda_Logo", (ax * (L + e + .009), ay * (L + e + .009), H - .15), virado, .8, C_BLITZ, r, LOGO_CLARO) if LOGO else texto("Tenda_Texto", "LEI SECA", .19, (ax * (L + e + .009), ay * (L + e + .009), H - .15), virado, M["texto_br"], C_BLITZ, r))
     for k, mx in enumerate((-.68, .68)):
         mesa("Tenda_Mesa_%d" % k, x + mx, y + .25)
     cadeira("Tenda_Cadeira_0", x - .7, y + .95, 0); cadeira("Tenda_Cadeira_1", x + .7, y + .95, 0)
@@ -493,7 +508,7 @@ def cavalete(i, x, y, rz, linha2="FISCALIZAÇÃO"):
         p = box("Cavalete_%d_Painel" % i, (.9, .02, 1.05), (0, sy * .17, .62), M["branco"], C_SINAL, r, rot=(sy * .27, 0, 0))
         box("Cavalete_%d_Borda" % i, (.96, .016, 1.11), (0, -sy * .004, 0), M["azul"], C_SINAL, p)
         v = "-y" if sy < 0 else "+y"
-        texto("Cavalete_%d_Texto" % i, "LEI SECA", .15, (0, sy * .012, .2), v, M["texto_az"], C_SINAL, p)
+        (logo_plano("Cavalete_%d_Logo" % i, (0, sy * .012, .2), v, .8, C_SINAL, p) if LOGO else texto("Cavalete_%d_Texto" % i, "LEI SECA", .15, (0, sy * .012, .2), v, M["texto_az"], C_SINAL, p))
         texto("Cavalete_%d_Sub" % i, linha2, .065, (0, sy * .012, -.02), v, M["texto_pr"], C_SINAL, p)
         box("Cavalete_%d_Tarja" % i, (.8, .004, .1), (0, sy * .011, -.3), M["azul"], C_SINAL, p)
         texto("Cavalete_%d_Tarja_Texto" % i, "REDUZA A VELOCIDADE", .045, (0, sy * .014, -.3), v, M["texto_br"], C_SINAL, p)
