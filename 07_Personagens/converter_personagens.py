@@ -24,7 +24,7 @@ def _anims(s):
     fala = "m_gestic_talk_neutral_01" if s == "m" else "f_gestic_talk_nervous_01"
     return {"parada": s + "_idle_neutral_01", "falando": fala, "nervoso": s + "_idle_nervous_01",
             "sentado": s + "_idle_neutral_01+sentado", "sentado_falando": fala + "+sentado_pernas",
-            "sentado_parado": s + "_idle_neutral_01+sentado_parado", "sentado_nervoso": s + "_idle_nervous_01+sentado_parado", "sentado_entregando": s + "_idle_neutral_01+sentado_entrega", "soprando": s + "_idle_neutral_01+soprando"}
+            "sentado_parado": s + "_idle_neutral_01+sentado_parado", "sentado_nervoso": s + "_idle_nervous_01+sentado_parado", "sentado_entregando": s + "_idle_neutral_01+sentado_entrega", "sentado_entregando_meio": s + "_idle_neutral_01+sentado_entrega_meio", "soprando": s + "_idle_neutral_01+soprando"}
 PAPEIS = {
     "condutor_a": ("Male_Adult_01", {**_anims("m"), "irritado": "m_idle_angry_01", "andando": "m_walk_fast_01"}),
     "condutor_b": ("Female_Adult_08", {**_anims("f"), "andando": "m_walk_fast_01"}),
@@ -121,7 +121,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
     for lado, sgn in (("L", -1), ("R", 1)):
         ua, fa, hd = osso[lado + " UpperArm"], osso[lado + " Forearm"], osso[lado + " Hand"]
         lado = lado_r * sgn
-        if tipo == "sentado_entrega" and sgn < 0:
+        if tipo in ("sentado_entrega", "sentado_entrega_meio") and sgn < 0:
             # braco esquerdo estendido pela janela, para a FRENTE e para fora (em direcao ao agente), com a palma para BAIXO:
             # o documento fica preso em pinca, entre o polegar e o indicador
             from mathutils import Quaternion
@@ -136,6 +136,8 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
             L = l1 + l2
             ombro = (desejado[ua.parent.name] @ (ua.parent.matrix_local.inverted() @ ua.matrix_local)).translation
             punho = ombro + lado * L * .55 + frente * L * .75 + cima * L * .24        # a frente do ombro, acima do peitoril da janela
+            if tipo == "sentado_entrega_meio":                   # mao diante do peito, ainda dentro do carro
+                punho = ombro + lado * L * .10 + frente * L * .55 + cima * L * .16
             cot = ik_cotovelo(ombro, punho, l1, l2, lado * 1.0 - frente * .45 + cima * .2)      # cotovelo para fora, apoiado na janela
             M_ua, _ = mira(ua, fa, desejado[ua.parent.name], cot - ombro)
             M_fa, _ = mira(fa, hd, M_ua, punho - cot)
@@ -168,7 +170,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
                     Mp, _ = mira(d0, d01, M_hd, t_des * .35 + dir_mao * .7 + p * .6)
                     if d02: mira(d01, d02, Mp, dir_mao * .8 - t_des * .35 + p * .45)
             continue
-        if tipo in ("sentado", "sentado_parado") or (tipo == "sentado_entrega" and sgn > 0):
+        if tipo in ("sentado", "sentado_parado") or (tipo in ("sentado_entrega", "sentado_entrega_meio") and sgn > 0):
             # sentado ao volante. "sentado" = dirigindo: maos fechadas no aro, na posicao 10h10, cotovelos dobrados para baixo.
             # "sentado_parado" (e a mao direita na entrega do documento) = carro parado: maos descansando sobre as coxas.
             from mathutils import Quaternion

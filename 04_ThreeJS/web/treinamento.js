@@ -693,15 +693,26 @@ export async function iniciar(ctx) {
   function oferecerDocumentos() {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
-    if (u.acoes?.sentado_entregando) { u.baseAntes = u.base; u.base = 'sentado_entregando'; animar(c, 'sentado_entregando', 1e6, .45); }
-    desenharDoc('cnh'); A.docsOferecidos = true; docMao.visible = true; status();
+    // em dois tempos: primeiro ergue a mao dentro do carro (acima do peitoril), depois estende pela janela;
+    // direto do colo para fora, o braco atravessava a lataria da porta
+    if (u.acoes?.sentado_entregando) {
+      u.baseAntes = u.base; u.base = 'sentado_entregando';
+      if (u.acoes.sentado_entregando_meio) { animar(c, 'sentado_entregando_meio', 1e6, .4); setTimeout(() => { if (u.base === 'sentado_entregando') animar(c, 'sentado_entregando', 1e6, .45); }, 430); }
+      else animar(c, 'sentado_entregando', 1e6, .45);
+    }
+    desenharDoc('cnh'); A.docsOferecidos = true; status();
+    setTimeout(() => { if (A?.docsOferecidos && !A.docsPegos) docMao.visible = true; }, 480);        // o cartao aparece quando a mao ja saiu
     dica('O condutor estendeu os documentos: aponte para o cartão na mão dele e aperte o gatilho (ou clique) para pegar.');
   }
   function pegarDocumentos() {
     if (!A || A.docsPegos) return;
     const c = npcs.condutor, u = c.userData;
     A.docsPegos = true; docMao.visible = false;
-    if (u.baseAntes) { u.base = u.baseAntes; u.baseAntes = null; animar(c, u.base, 1e6, .5); }
+    if (u.baseAntes) {                                    // recolhe o braco pelo mesmo caminho: para dentro e so depois para o colo
+      const volta = u.baseAntes; u.base = volta; u.baseAntes = null;
+      if (u.acoes?.sentado_entregando_meio) { animar(c, 'sentado_entregando_meio', 1e6, .4); setTimeout(() => { if (u.base === volta) animar(c, volta, 1e6, .45); }, 430); }
+      else animar(c, volta, 1e6, .5);
+    }
     mostrarVista('cnh', conferirCNH);
   }
   const DC = new THREE.Vector3(), DN = new THREE.Vector3(), DY = new THREE.Vector3(), DMAT = new THREE.Matrix4();

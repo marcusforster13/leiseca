@@ -10,6 +10,7 @@
    "sentado_parado",
    "sentado_nervoso",
    "sentado_entregando",
+   "sentado_entregando_meio",
    "soprando",
    "irritado",
    "andando"
@@ -26,6 +27,7 @@
    "sentado_parado",
    "sentado_nervoso",
    "sentado_entregando",
+   "sentado_entregando_meio",
    "soprando",
    "andando"
   ]
@@ -41,6 +43,7 @@
    "sentado_parado",
    "sentado_nervoso",
    "sentado_entregando",
+   "sentado_entregando_meio",
    "soprando",
    "irritado",
    "andando"
