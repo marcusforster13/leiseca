@@ -10,10 +10,8 @@ import * as THREE from 'three';
 
 // posicoes em coordenadas da cena web (Y para cima)
 const DEF = {
-  amb_rua_noite:       { tipo: 'ambiente', fora: .5, dentro: .5 },
-  amb_transito_noite:  { tipo: 'ambiente', fora: .3, dentro: .3 },
+  amb_transito_noite:  { tipo: 'ambiente', fora: .5, dentro: .5 },
   motor_carro_chegando: { tipo: 'evento', vol: .55, ini: 16.5, dur: 9.5 },   // so o trecho em que o carro se aproxima e para
-  amb_casa_interior:   { tipo: 'ambiente', fora: 0, dentro: .35 },
   cachorro_longe:      { tipo: 'esporadico', area: [[-45, -25], [-45, 45]], vol: .45, intervalo: [25, 60] },
   sirene_longe:        { tipo: 'evento', vol: .4 },
   radio_chiado:        { tipo: 'evento', vol: .3 },

@@ -8,7 +8,6 @@ Fonte: **freesound.org**, só sons com licença **Creative Commons 0** (uso livr
 
 | Arquivo | O que é | Origem (Freesound, CC0) |
 |---|---|---|
-| `amb_rua_noite` | Ambiente de rua à noite (loop) | veio do projeto anterior |
 | `amb_transito_noite` | Trânsito noturno a média distância: carros, motos e ônibus passando (loop) | "Medium Night City Traffic 2", brunoboselli, som 871592 |
 | `motor_carro_chegando` | Carro se aproximando e parando (o site toca só o trecho de 16,5 s a 26 s) | "Pulls up and Parks Car", benwer, som 260828 |
 | `bip_etilometro` | Bipe curto do aparelho (o site toca duas vezes) | "Medium Electronic Beep", wubitog, som 188383 |
