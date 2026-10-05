@@ -311,6 +311,15 @@ if os.path.isdir(cen_src):
         if f.endswith(".json"):
             shutil.copy2(os.path.join(cen_src, f), os.path.join(WEB, "treinamento", f))
     say("cenarios de treinamento copiados para web/treinamento/")
+# veiculos do transito (faixas livres): copia os modelos, com texturas de ate 512 px
+transito_src = os.path.normpath(os.path.join(BASE, "..", "01_Cena_Render_Cycles", "modelos", "carros"))
+if os.path.isdir(transito_src):
+    os.makedirs(os.path.join(WEB, "transito"), exist_ok=True)
+    for nome in ("suv", "minivan", "taxi", "onibus"):
+        f = os.path.join(transito_src, nome + ".glb")
+        if os.path.exists(f):
+            shutil.copy2(f, os.path.join(WEB, "transito", nome + ".glb"))
+    say("modelos do transito copiados para web/transito/")
 aud_src = os.path.normpath(os.path.join(BASE, "..", "06_Audio", "brutos"))
 if os.path.isdir(aud_src):
     aud_dst = os.path.join(WEB, "audio"); os.makedirs(aud_dst, exist_ok=True)

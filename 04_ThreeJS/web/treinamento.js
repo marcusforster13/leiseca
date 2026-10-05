@@ -544,6 +544,7 @@ export async function iniciar(ctx) {
     S.variacao = v; S.feitos = new Map();
     A = { n: HIST.length + 1, fase: 'chegando', titulo: cap?.titulo || `Atendimento ${HIST.length + 1}` };
     criarNPCs(v);
+    window.__transito?.segurar(false);
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
     const abrir = () => {
@@ -709,8 +710,13 @@ export async function iniciar(ctx) {
       setTimeout(concluir, 4500);
     } else {
       if (A.destino === 'entregar') legenda('Operação', 'A passageira assume o volante.', 4);
-      C.vmax = 6; C.frear = false; C.rota = SAIDA.map(p => [...p]);
-      C.aoChegar = () => { carro.visible = false; Object.values(npcs).forEach(n => n.visible = false); };
+      const tr = window.__transito, t0 = performance.now(); tr?.segurar(true);
+      const sair = () => {
+        if (tr && !tr.livre() && performance.now() - t0 < 12000) return setTimeout(sair, 300);
+        C.vmax = 6; C.frear = false; C.rota = SAIDA.map(p => [...p]);
+        C.aoChegar = () => { carro.visible = false; Object.values(npcs).forEach(n => n.visible = false); tr?.segurar(false); };
+      };
+      sair();
       setTimeout(concluir, 4500);
     }
     status();

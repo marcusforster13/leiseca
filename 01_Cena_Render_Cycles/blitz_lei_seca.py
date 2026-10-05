@@ -941,8 +941,6 @@ else:
     ABORD, _, _, corpo_ab = veiculo("Carro_Abordado", C_ABORD, (-7.0, 1.9, 0), 0, EST_HATCH, M["pint_cinza"], None, "hatch", janela_aberta=True, placa="KXR3B47")
 if not carro_modelo("Carro_Regularizacao", C_REG, "seda", (13.2, 1.75, 0), .04, cor="#e9e9e6"):
     veiculo("Carro_Regularizacao", C_REG, (13.2, 1.75, 0), .04, EST_HATCH, M["pint_branca"], None, "hatch", placa="LTM8F02")
-# um veiculo estacionado do outro lado da via, para compor
-carro_modelo("Carro_Estacionado", C_REG, "suv", (-16.0, -5.75, 0), PI)
 
 # ================================================================== 7. EQUIPAMENTOS (interativos)
 # mesa de equipamentos ao lado do ponto de abordagem

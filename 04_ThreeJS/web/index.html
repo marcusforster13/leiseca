@@ -444,6 +444,7 @@ renderer.setAnimationLoop(() => {
   hotspots.children.forEach((g, i) => { g.lookAt(V1); g.userData.ring.scale.setScalar(1 + .18 * Math.sin(t * 3 + i)); });
   window.__trein?.quadro();
   window.__som?.quadro(dt);
+  window.__transito?.quadro(dt);
   renderer.render(scene, camera);
 });
 
@@ -451,6 +452,11 @@ renderer.setAnimationLoop(() => {
 import('./audio.js').then(m => m.iniciarAudio({ scene, camera, renderer })).catch(e => console.warn('Áudio não carregou:', e));
 let somMudo = false;
 addEventListener('keydown', e => { if (e.code === 'KeyM' && window.__som) { somMudo = !somMudo; window.__som.mudo(somMudo); } });
+
+/* ---------- transito nas faixas livres ---------- */
+import('./transito.js').then(m => m.iniciarTransito({ scene, iluminar,
+  obstaculo: () => { const c = window.__trein?._t.carro; return c && c.visible && c.position.z > -.4 ? c.position : null; }
+})).catch(e => console.warn('Trânsito não carregou:', e));
 
 /* ---------- motor do treinamento (fase 2) ---------- */
 import('./treinamento.js').then(m => m.iniciar({
