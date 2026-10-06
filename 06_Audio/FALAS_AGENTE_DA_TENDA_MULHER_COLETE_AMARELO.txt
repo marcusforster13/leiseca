@@ -11,7 +11,7 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Aqui na tenda a gente consulta os documentos e imprime os autos. Precisando, é só chamar."
+[x]  1.  "Aqui na tenda a gente consulta os documentos e imprime os autos. Precisando, é só chamar."
       Quando: Na tenda de registro, quando o agente fala com ela
       Tempo: 7–9 s     Arquivo: fala_agente_tenda_01
 
