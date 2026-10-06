@@ -27,6 +27,7 @@ export async function iniciarAudio({ scene, camera, renderer }) {
   const arquivos = Object.fromEntries(manifest.map(f => [f.replace(/\.(mp3|ogg|wav)$/i, ''), 'audio/' + f]));
   const listener = new THREE.AudioListener(); camera.add(listener);
   const loader = new THREE.AudioLoader(), buffers = {}, ganho = {}, ambientes = [], posicionais = [];
+  const fala = {};                                       // trecho util de cada fala gravada (sem os silencios das pontas)
   const V = new THREE.Vector3();
   let ligado = false, mudo = false, gesto = false, pronto = false;
 
@@ -49,11 +50,22 @@ export async function iniciarAudio({ scene, camera, renderer }) {
   if (navigator.userActivation?.hasBeenActive) desbloquear();     // ja houve clique antes deste modulo carregar
 
   await Promise.all(Object.entries(arquivos).filter(([n]) => DEF[n] || n.startsWith('fala_')).map(([n, url]) =>
-    loader.loadAsync(url).then(b => { buffers[n] = b; ganho[n] = normalizar(b); }).catch(() => console.warn('som nao carregou:', url))));
+    loader.loadAsync(url).then(b => { buffers[n] = b; ganho[n] = normalizar(b); if (n.startsWith('fala_')) fala[n] = silencio(b); }).catch(() => console.warn('som nao carregou:', url))));
   pronto = true;
   if (gesto) ligar();
 
   // normaliza cada arquivo para ~-20 dB RMS sem passar de 0,95 de pico (arquivos baixos ficam audiveis)
+  // falas gravadas: descobre onde a voz comeca e termina, para tocar sem os silencios das pontas
+  // (deixa ~0,10 s antes e ~0,30 s depois). Assim a gravacao pode vir "crua", sem edicao.
+  function silencio(b) {
+    const d = b.getChannelData(0), sr = b.sampleRate; let pico = 1e-4;
+    for (let i = 0; i < d.length; i += 4) { const v = Math.abs(d[i]); if (v > pico) pico = v; }
+    const lim = Math.max(.012, pico * .06); let a = 0, z = d.length - 1;
+    while (a < d.length && Math.abs(d[a]) < lim) a++;
+    while (z > a && Math.abs(d[z]) < lim) z--;
+    const ini = Math.max(0, a / sr - .1), fim = Math.min(b.duration, z / sr + .3);
+    return { ini, dur: Math.max(.2, fim - ini), fade: .06 };
+  }
   function normalizar(b) {
     const d = b.getChannelData(0); let pico = 1e-4, s = 0, n = 0;
     for (let i = 0; i < d.length; i += 8) { const v = Math.abs(d[i]); if (v > pico) pico = v; s += v * v; n++; }
@@ -66,8 +78,8 @@ export async function iniciarAudio({ scene, camera, renderer }) {
     if (d.ritmo) a.setPlaybackRate(d.ritmo);              // fala mais lenta (e um pouco mais grave)
     if (d.ini != null) a.offset = d.ini;
     if (!d.dur) return;
-    a.duration = d.dur; const t = listener.context.currentTime;
-    a.gain.gain.setValueAtTime(v, t + d.dur - 1); a.gain.gain.linearRampToValueAtTime(0, t + d.dur);
+    a.duration = d.dur; const t = listener.context.currentTime, real = d.dur / (d.ritmo || 1), sai = Math.min(d.fade ?? 1, real / 2);
+    a.gain.gain.setValueAtTime(v, t + real - sai); a.gain.gain.linearRampToValueAtTime(0, t + real);
   }
 
   function ligar() {
@@ -121,13 +133,13 @@ export async function iniciarAudio({ scene, camera, renderer }) {
 
   const api = {
     tem: n => !!buffers[n],
-    duracao: n => buffers[n]?.duration || 0,           // segundos (falas gravadas)
+    duracao: n => fala[n]?.dur || buffers[n]?.duration || 0,           // segundos (falas gravadas)
     // eventos do treinamento; retorna false se o arquivo nao existe. Com analisar=true devolve um medidor de volume
     // da fala (0 a 1, antes da atenuacao por distancia) para mexer a boca do personagem
-    tocar(n, pos, analisar = false) {
+    tocar(n, pos, analisar = false, trecho = null) {     // trecho = { ini, dur, ritmo }: toca so uma parte do arquivo, ou mais devagar
       if (!buffers[n]) return false;
       ligar();
-      const d = DEF[n] || { vol: n.startsWith('fala_') ? 1 : .7 };
+      const d = { ...(DEF[n] || { vol: n.startsWith('fala_') ? 1 : .7 }), ...(fala[n] || {}), ...(trecho || {}) };
       if (mudo) return true;
       let a;
       if (pos) {
@@ -147,6 +159,7 @@ export async function iniciarAudio({ scene, camera, renderer }) {
     mudo(v) { mudo = v; for (const p of posicionais) p.a.setVolume(v ? 0 : vol(p.n, p.d.vol)); },
     desbloquear,
     quadro, carregados: () => Object.keys(buffers),
+    falas: () => Object.fromEntries(Object.entries(fala).map(([k, v]) => [k, [+v.ini.toFixed(2), +v.dur.toFixed(2), +buffers[k].duration.toFixed(2), +(ganho[k] || 1).toFixed(2)]])),
     estado: () => ({ contexto: listener.context.state, ligado, mudo, dentro: +dentro.toFixed(2), ganho: Object.fromEntries(Object.entries(ganho).map(([k, v]) => [k, +v.toFixed(2)])),
       ambientes: ambientes.map(({ a }) => ({ tocando: a.isPlaying, volume: +a.getVolume().toFixed(2) })),
       posicionais: posicionais.map(({ n, a }) => ({ n, tocando: a.isPlaying })) })

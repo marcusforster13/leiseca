@@ -11,67 +11,67 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Boa noite. Tudo bem, pode falar."
+[x]  1.  "Boa noite. Tudo bem, pode falar."
       Quando: Depois do cumprimento do agente · condutor colaborativo, tranquilo
       Tempo: 3–4 s     Arquivo: fala_condutor_01
 
-[ ]  2.  "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa."
+[x]  2.  "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa."
       Quando: Depois do cumprimento do agente · condutor nervoso, com receio
       Tempo: 5–7 s     Arquivo: fala_condutor_02
 
-[ ]  3.  "De novo isso? Eu tô com pressa, hein."
+[x]  3.  "De novo isso? Eu tô com pressa, hein."
       Quando: Depois do cumprimento do agente · condutor hostil, impaciente
       Tempo: 3–5 s     Arquivo: fala_condutor_03
 
-[ ]  4.  "Pronto, desliguei."
+[x]  4.  "Pronto, desliguei."
       Quando: O agente diz: "Por favor, desligue o motor e acenda a luz interna."
       Tempo: 1–2 s     Arquivo: fala_condutor_04
 
-[ ]  5.  "Tá aqui, ó."
+[x]  5.  "Tá aqui, ó."
       Quando: O agente diz: "Habilitação e documento do veículo, por favor. Pode ser no aplicativo." · estende os documentos pela janela
       Tempo: 1–2 s     Arquivo: fala_condutor_05
 
-[ ]  6.  "Tudo bem, eu faço."
+[x]  6.  "Tudo bem, eu faço."
       Quando: Aceita fazer o teste · condutor que não bebeu, seguro
       Tempo: 2–2 s     Arquivo: fala_condutor_06
 
-[ ]  7.  "Tá… eu tomei só uma no almoço. Mas eu faço."
+[x]  7.  "Tá… eu tomei só uma no almoço. Mas eu faço."
       Quando: Aceita fazer o teste · condutor que bebeu, sem graça, tentando se explicar
       Tempo: 5–7 s     Arquivo: fala_condutor_07
 
-[ ]  8.  "Não vou soprar nada, não. Eu conheço os meus direitos."
+[x]  8.  "Não vou soprar nada, não. Eu conheço os meus direitos."
       Quando: Recusa o teste · firme, desafiando
       Tempo: 4–6 s     Arquivo: fala_condutor_08
 
-[ ]  9.  "Pode multar. Eu não sopro."
+[x]  9.  "Pode multar. Eu não sopro."
       Quando: Depois que o agente explica a multa pela recusa · seco, encerrando o assunto
       Tempo: 2–3 s     Arquivo: fala_condutor_09
 
-[ ] 10.  "Falei que não tinha bebido."
+[x] 10.  "Falei que não tinha bebido."
       Quando: Vê o resultado 0,00 · aliviado, um pouco irônico
       Tempo: 2–3 s     Arquivo: fala_condutor_10
 
-[ ] 11.  "Mas foi só uma cerveja…"
+[x] 11.  "Mas foi só uma cerveja…"
       Quando: Vê o resultado de infração (0,18) · decepcionado, minimizando
       Tempo: 3–4 s     Arquivo: fala_condutor_11
 
-[ ] 12.  "Não… esse aparelho tá errado."
+[x] 12.  "Não… esse aparelho tá errado."
       Quando: Vê o resultado de crime (0,52) · assustado, negando
       Tempo: 3–4 s     Arquivo: fala_condutor_12
 
-[ ] 13.  "Obrigado. Boa noite."
+[x] 13.  "Obrigado. Boa noite."
       Quando: Despedida · foi liberado, educado
       Tempo: 1–2 s     Arquivo: fala_condutor_13
 
-[ ] 14.  "Tá bom… boa noite."
+[x] 14.  "Tá bom… boa noite."
       Quando: Despedida · foi autuado, conformado
       Tempo: 2–3 s     Arquivo: fala_condutor_14
 
-[ ] 15.  "Isso é um absurdo. Eu vou recorrer."
+[x] 15.  "Isso é um absurdo. Eu vou recorrer."
       Quando: Despedida · foi autuado e está revoltado
       Tempo: 3–4 s     Arquivo: fala_condutor_15
 
-[ ] 16.  "Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo."
+[x] 16.  "Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo."
       Quando: Modo exploração (antes de começar o treinamento) · simpático
       Tempo: 5–6 s     Arquivo: fala_condutor_16
 
