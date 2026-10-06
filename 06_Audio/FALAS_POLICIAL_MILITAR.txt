@@ -11,7 +11,7 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Estou na segurança da operação. Havendo crime de trânsito, a condução à delegacia é comigo."
+[x]  1.  "Estou na segurança da operação. Havendo crime de trânsito, a condução à delegacia é comigo."
       Quando: Ao lado da viatura, quando o agente fala com ele
       Tempo: 7–9 s     Arquivo: fala_policial_01
 
