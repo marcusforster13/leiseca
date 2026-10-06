@@ -11,7 +11,7 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Eu seleciono os veículos e mando para a faixa de abordagem. Daqui para a frente é com você."
+[x]  1.  "Eu seleciono os veículos e mando para a faixa de abordagem. Daqui para a frente é com você."
       Quando: Na entrada da blitz, quando o agente fala com ele
       Tempo: 8–11 s     Arquivo: fala_agente_selecao_01
 
