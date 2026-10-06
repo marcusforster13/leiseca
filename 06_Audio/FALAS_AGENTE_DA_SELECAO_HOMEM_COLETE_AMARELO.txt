@@ -1,0 +1,19 @@
+﻿OPERAÇÃO LEI SECA — FALAS: AGENTE DA SELEÇÃO (HOMEM, COLETE AMARELO)
+============================================================
+
+Colega de equipe, tom de trabalho, direto e cordial.
+
+Como gravar:
+- Um arquivo por fala, com o nome indicado (.wav ou .mp3).
+- Salvar em 06_Audio\brutos\ (ou mandar para o Claude).
+- Falar exatamente o texto (é por ele que o site encontra a gravação).
+- ~0,5 s de silêncio no começo e no fim. O tempo é só referência.
+
+------------------------------------------------------------
+
+[ ]  1.  "Eu seleciono os veículos e mando para a faixa de abordagem. Daqui para a frente é com você."
+      Quando: Na entrada da blitz, quando o agente fala com ele
+      Tempo: 8–11 s     Arquivo: fala_agente_selecao_01
+
+------------------------------------------------------------
+Total: 1 falas ([x] = já gravada).

@@ -150,7 +150,14 @@ export async function iniciar(ctx) {
     const hl = document.getElementById('legendaHTML'); if (hl && !vr) { hl.innerHTML = `<b>${quem}:</b> ${texto}`; hl.hidden = false; }
   }
   // catalogo de vozes gravadas (cenario -> vozes.falas): o texto falado encontra o arquivo
-  const VOZ = new Map((CEN.vozes?.falas || []).map(f => [f.texto, f.arquivo]));
+  const VOZ = new Map((CEN.vozes?.falas || []).filter(f => !/_f$/.test(f.arquivo)).map(f => [f.texto, f.arquivo]));
+  // arquivo gravado para um texto, na voz certa: a condutora usa <arquivo>_f; se so houver a gravacao masculina, ela
+  // fica com a voz sintetica (nao fala com voz de homem)
+  function vozGravada(texto, voz = 'm') {
+    const a = VOZ.get(texto) || VOZ.get(texto.replace(/\bObrigada\b/g, 'Obrigado')); if (!a) return null;
+    if (/^f/.test(voz)) return window.__som?.tem(a + '_f') ? a + '_f' : (/^fala_condutor_/.test(a) ? null : (window.__som?.tem(a) ? a : null));
+    return window.__som?.tem(a) ? a : null;
+  }
   const gravacao = texto => { const a = VOZ.get(texto); return a && window.__som?.tem(a) ? a : null; };
   const duracaoFala = texto => { const a = gravacao(texto); return a ? window.__som.duracao(a) : Math.max(2.6, texto.length / 14); };
   const espera = ms => new Promise(r => setTimeout(r, ms));
@@ -190,13 +197,14 @@ export async function iniciar(ctx) {
 
   /* fala com audio gravado (06_Audio/brutos/<audio>.mp3) ou voz sintetica, legenda e gesto; termina quando a fala acaba */
   async function dizer(npc, quem, linha, voz = 'f') {
-    const { texto, gesto } = linha, audio = linha.audio || VOZ.get(texto);
+    const { texto, gesto } = linha, audio = linha.audio || vozGravada(texto, voz);
     const som = window.__som, gravado = audio && som?.tem(audio);
-    const seg = gravado ? som.duracao(audio) : Math.max(2.5, texto.length / 13);
+    const ritmo = /_lento$/.test(voz) ? .84 : 1;            // condutor com sinais de embriaguez: a mesma gravacao, mais devagar
+    const seg = gravado ? som.duracao(audio) / ritmo : Math.max(2.5, texto.length / 13);
     legenda(quem, texto, seg + .6);
     if (npc && gesto) animar(npc, gesto, seg + 1.5);
     if (gravado) {
-      const med = som.tocar(audio, npc ? npc.position.clone().setY(1.55) : null, true);
+      const med = som.tocar(audio, npc ? npc.position.clone().setY(1.55) : null, true, ritmo !== 1 ? { ritmo } : null);
       const f = npc && { medidor: typeof med === 'function' ? med : null, sintetica: typeof med !== 'function', ate: performance.now() + seg * 1000 };
       if (npc) npc.userData.fala = f;
       await espera(seg * 1000 + 350); if (npc?.userData.fala === f) npc.userData.fala = null; return;
@@ -1084,7 +1092,7 @@ export async function iniciar(ctx) {
     if (A?.fase === 'chegando' && hc && hc.distance < 60) { entrar(true); return true; }
     if (docMao.visible) { const hd = ray.intersectObject(docHit, false)[0]; if (hd && hd.distance < 4) { pegarDocumentos(); return true; } }
     if (hn && hn.distance < 4.5) {
-      if (hn.object.userData.npc === 'Condutor') menuCondutor(); else legenda('Passageira', 'Boa noite.', 2.5);
+      if (hn.object.userData.npc === 'Condutor') menuCondutor(); else dizer(npcs.passageiro, 'Passageira', { texto: 'Boa noite.' }, 'f');
       return true;
     }
     if (hc && hc.distance < 4.5 && A?.fase === 'parado') { menuCondutor(); return true; }

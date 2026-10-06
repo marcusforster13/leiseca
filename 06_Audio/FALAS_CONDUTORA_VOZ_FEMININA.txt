@@ -1,0 +1,79 @@
+﻿OPERAÇÃO LEI SECA — FALAS: CONDUTORA (VOZ FEMININA)
+============================================================
+
+Mulher, 25 a 45 anos. São as mesmas falas do condutor, na voz feminina (os condutores são sorteados no treinamento).
+
+Como gravar:
+- Um arquivo por fala, com o nome indicado (.wav ou .mp3).
+- Salvar em 06_Audio\brutos\ (ou mandar para o Claude).
+- Falar exatamente o texto (é por ele que o site encontra a gravação).
+- ~0,5 s de silêncio no começo e no fim. O tempo é só referência.
+
+------------------------------------------------------------
+
+[ ]  1.  "Boa noite. Tudo bem, pode falar."
+      Quando: Depois do cumprimento do agente · condutor colaborativo, tranquilo
+      Tempo: 3–4 s     Arquivo: fala_condutor_01_f
+
+[ ]  2.  "Boa noite… aconteceu alguma coisa? Eu tô só voltando pra casa."
+      Quando: Depois do cumprimento do agente · condutor nervoso, com receio
+      Tempo: 5–7 s     Arquivo: fala_condutor_02_f
+
+[ ]  3.  "De novo isso? Eu tô com pressa, hein."
+      Quando: Depois do cumprimento do agente · condutor hostil, impaciente
+      Tempo: 3–5 s     Arquivo: fala_condutor_03_f
+
+[ ]  4.  "Pronto, desliguei."
+      Quando: O agente diz: "Por favor, desligue o motor e acenda a luz interna."
+      Tempo: 1–2 s     Arquivo: fala_condutor_04_f
+
+[ ]  5.  "Tá aqui, ó."
+      Quando: O agente diz: "Habilitação e documento do veículo, por favor. Pode ser no aplicativo." · estende os documentos pela janela
+      Tempo: 1–2 s     Arquivo: fala_condutor_05_f
+
+[ ]  6.  "Tudo bem, eu faço."
+      Quando: Aceita fazer o teste · condutor que não bebeu, seguro
+      Tempo: 2–2 s     Arquivo: fala_condutor_06_f
+
+[ ]  7.  "Tá… eu tomei só uma no almoço. Mas eu faço."
+      Quando: Aceita fazer o teste · condutor que bebeu, sem graça, tentando se explicar
+      Tempo: 5–7 s     Arquivo: fala_condutor_07_f
+
+[ ]  8.  "Não vou soprar nada, não. Eu conheço os meus direitos."
+      Quando: Recusa o teste · firme, desafiando
+      Tempo: 4–6 s     Arquivo: fala_condutor_08_f
+
+[ ]  9.  "Pode multar. Eu não sopro."
+      Quando: Depois que o agente explica a multa pela recusa · seco, encerrando o assunto
+      Tempo: 2–3 s     Arquivo: fala_condutor_09_f
+
+[ ] 10.  "Falei que não tinha bebido."
+      Quando: Vê o resultado 0,00 · aliviado, um pouco irônico
+      Tempo: 2–3 s     Arquivo: fala_condutor_10_f
+
+[ ] 11.  "Mas foi só uma cerveja…"
+      Quando: Vê o resultado de infração (0,18) · decepcionado, minimizando
+      Tempo: 3–4 s     Arquivo: fala_condutor_11_f
+
+[ ] 12.  "Não… esse aparelho tá errado."
+      Quando: Vê o resultado de crime (0,52) · assustado, negando
+      Tempo: 3–4 s     Arquivo: fala_condutor_12_f
+
+[ ] 13.  "Obrigada. Boa noite."
+      Quando: Despedida · foi liberado, educado
+      Tempo: 1–2 s     Arquivo: fala_condutor_13_f
+
+[ ] 14.  "Tá bom… boa noite."
+      Quando: Despedida · foi autuado, conformado
+      Tempo: 2–3 s     Arquivo: fala_condutor_14_f
+
+[ ] 15.  "Isso é um absurdo. Eu vou recorrer."
+      Quando: Despedida · foi autuado e está revoltado
+      Tempo: 3–4 s     Arquivo: fala_condutor_15_f
+
+[ ] 16.  "Boa noite. É a Lei Seca? Pode fiscalizar, tá tudo certo."
+      Quando: Modo exploração (antes de começar o treinamento) · simpático
+      Tempo: 5–6 s     Arquivo: fala_condutor_16_f
+
+------------------------------------------------------------
+Total: 16 falas ([x] = já gravada).

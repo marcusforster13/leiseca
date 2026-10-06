@@ -14,10 +14,16 @@ gravados = {os.path.splitext(f)[0] for f in os.listdir(BRUTOS)} if os.path.isdir
 falas = []
 falas += CEN['vozes']['falas']
 
-ORDEM = ['Condutor', 'Coordenação (rádio)']
+ORDEM = list(dict.fromkeys(f['personagem'] for f in falas))       # na ordem do catalogo
 DICAS = {
-    'Condutor': 'Motorista parado na blitz, falando pela janela do carro. Grave as mesmas falas com uma voz masculina e uma feminina (os condutores são sorteados). Tom conforme a indicação: colaborativo, nervoso ou irritado.',
-    'Coordenação (rádio)': 'Voz de rádio, firme e curta, sem emoção.',
+    'Condutor (voz masculina)': 'Homem, 30 a 50 anos, motorista parado na blitz falando pela janela do carro. O tom muda a cada fala (veja a indicação embaixo de cada uma). Fale como gente de verdade, sem tom de locutor.',
+    'Condutora (voz feminina)': 'Mulher, 25 a 45 anos. São as mesmas falas do condutor, na voz feminina (os condutores são sorteados no treinamento).',
+    'Passageira': 'Mulher no banco do carona. Pode ser a mesma voz da condutora.',
+    'Coordenação (rádio)': 'Voz de rádio da coordenação da operação: firme, curta, sem emoção. Homem ou mulher.',
+    'Agente da seleção (homem, colete amarelo)': 'Colega de equipe, tom de trabalho, direto e cordial.',
+    'Agente da tenda (mulher, colete amarelo)': 'Colega de equipe, prestativa.',
+    'Agente da regularização (homem, colete laranja)': 'Colega de equipe explicando o posto dele. Use uma voz diferente da do agente da seleção.',
+    'Policial militar': 'Policial da segurança da operação: calmo e firme.',
 }
 def seg(t):   # estimativa: fala pausada (~2,3 palavras/s) + pausas nos "…"
     s = len(t.split()) / 2.3 + t.count('…') * .6
@@ -50,7 +56,7 @@ doc = f'''<!doctype html>
   .ok {{ width: 22px; text-align: center; }} .obs {{ display: block; color: #555; font-size: 12px; margin-top: 3px; }} tr.feita td {{ color: #777; }}
   @media print {{ body {{ margin: 0; }} h2 {{ break-after: avoid; }} tr {{ break-inside: avoid; }} }}
 </style></head><body>
-<h1>Roteiro de vozes — todos os personagens</h1>
+<h1>Roteiro de vozes — todas as falas de todos os personagens</h1>
 <p class="sub">Operação Lei Seca · cenário ls_01 · {feitas} de {total} falas já gravadas (linhas em cinza)</p>
 <div class="box"><b>Como gravar</b><ul>
 <li><b>Um arquivo por fala</b>, com o nome da coluna "Arquivo" (.wav ou .mp3), em <b>06_Audio\\brutos\\</b>. Deixe ~0,5 s de silêncio no começo e no fim.</li>
@@ -58,6 +64,8 @@ doc = f'''<!doctype html>
 <li>Fale <b>exatamente o texto</b> da tabela (se quiser mudar uma fala, me avise para eu mudar no site também).</li>
 <li>Cômodo pequeno e sem eco (cortina, roupas, almofadas), sem ventilador ou geladeira ligados. Celular serve.</li>
 <li>A fala que tiver arquivo toca com a voz gravada saindo do personagem (com a boca mexendo); as outras continuam com voz sintética.</li>
+<li>As falas do <b>agente</b> (você, o jogador) não são gravadas: aparecem como opções para escolher. Em cada fala abaixo está indicado o que o agente acabou de dizer ou o que aconteceu.</li>
+<li>Condutor com sinais de embriaguez: <b>não precisa regravar</b>. O site toca a mesma gravação mais devagar.</li>
 </ul></div>
 {"".join(linhas)}
 </body></html>
@@ -66,7 +74,11 @@ open(os.path.join(AQUI, 'ROTEIRO_VOZES.html'), 'w', encoding='utf8').write(doc)
 print('[VOZES] %d falas, %d gravadas -> ROTEIRO_VOZES.html' % (total, feitas))
 
 # um .txt por personagem, para imprimir (FALAS_VITIMA.txt, FALAS_AGRESSOR.txt, ...)
-ARQ_TXT = {'Condutor': 'CONDUTOR', 'Coordenação (rádio)': 'COORDENACAO'}
+import re, unicodedata
+def _arq(p):
+    s = unicodedata.normalize('NFD', p).encode('ascii', 'ignore').decode()
+    return re.sub(r'[^A-Za-z0-9]+', '_', s).strip('_').upper()
+ARQ_TXT = {p: _arq(p) for p in ORDEM}
 for p in ORDEM:
     grupo = [f for f in falas if f['personagem'] == p]
     if not grupo: continue

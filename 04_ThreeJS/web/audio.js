@@ -63,6 +63,7 @@ export async function iniciarAudio({ scene, camera, renderer }) {
   const vol = (n, v) => v * (ganho[n] || 1);
   // toca so um trecho do arquivo (ini, dur em segundos), com 1 s de saida suave
   function recorte(a, d, v) {
+    if (d.ritmo) a.setPlaybackRate(d.ritmo);              // fala mais lenta (e um pouco mais grave)
     if (d.ini != null) a.offset = d.ini;
     if (!d.dur) return;
     a.duration = d.dur; const t = listener.context.currentTime;

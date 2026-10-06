@@ -1,0 +1,19 @@
+﻿OPERAÇÃO LEI SECA — FALAS: POLICIAL MILITAR
+============================================================
+
+Policial da segurança da operação: calmo e firme.
+
+Como gravar:
+- Um arquivo por fala, com o nome indicado (.wav ou .mp3).
+- Salvar em 06_Audio\brutos\ (ou mandar para o Claude).
+- Falar exatamente o texto (é por ele que o site encontra a gravação).
+- ~0,5 s de silêncio no começo e no fim. O tempo é só referência.
+
+------------------------------------------------------------
+
+[ ]  1.  "Estou na segurança da operação. Havendo crime de trânsito, a condução à delegacia é comigo."
+      Quando: Ao lado da viatura, quando o agente fala com ele
+      Tempo: 7–9 s     Arquivo: fala_policial_01
+
+------------------------------------------------------------
+Total: 1 falas ([x] = já gravada).
