@@ -439,7 +439,7 @@ export async function iniciar(ctx) {
   function seguirCarro(n) {
     const u = n.userData; if (!u.assento) return;
     VB.set(BANCO[0] + .08, 0, -BANCO[1] * u.assento).applyAxisAngle(UP, carro.rotation.y);      // um pouco a frente no banco: o braco sai pelo meio da janela
-    n.position.set(carro.position.x + VB.x, BANCO[2] - .05 - .925 * (u.altura / 1.78), carro.position.z + VB.z);
+    n.position.set(carro.position.x + VB.x, BANCO[2] - .11 - .925 * (u.altura / 1.78), carro.position.z + VB.z);
     n.rotation.y = carro.rotation.y + Math.PI / 2; n.visible = carro.visible;
   }
   // porta do motorista (peca separada no modelo, com a origem na dobradica)
