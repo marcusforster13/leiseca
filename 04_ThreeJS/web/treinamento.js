@@ -602,8 +602,7 @@ export async function iniciar(ctx) {
     ['agente_a', 'Agente', -19.4, -3.25, -Math.PI / 2, 'Eu seleciono os veículos e mando para a faixa de abordagem. Daqui para a frente é com você.', 'm'],
     ['agente_b', 'Agente', -9.2, -4.55, .3, 'Aqui na tenda a gente consulta os documentos e imprime os autos. Precisando, é só chamar.', 'f'],
     ['agente_c', 'Agente', 9.5, -3.75, 1.9, 'Esta é a área de regularização: o veículo fica aqui até aparecer um condutor habilitado e em condições.', 'm'],
-    ['pm_a', 'Policial', 11.6, -3.7, .25, 'Estamos na segurança da operação. Havendo crime de trânsito, a condução à delegacia é com a gente.', 'm'],
-    ['pm_b', 'Policial', 12.5, -4.0, -.35, 'Tudo tranquilo por aqui. Qualquer alteração com condutor, é só sinalizar.', 'm'],
+    ['pm_b', 'Policial', 12.0, -3.85, -.1, 'Estou na segurança da operação. Havendo crime de trânsito, a condução à delegacia é comigo.', 'm'],
   ];
   function criarFigurantes() {
     for (const [papel, nome, x, z, giro, fala, voz] of FIGURANTES) {

@@ -33,7 +33,6 @@ PAPEIS = {
     "agente_a": ("Construction_Male_08", {"parada": "m_idle_neutral_01", "falando": "m_gestic_talk_neutral_01"}),
     "agente_b": ("Construction_Female_01", {"parada": "f_idle_neutral_01", "falando": "f_gestic_talk_nervous_01"}),
     "agente_c": ("Construction_Male_07", {"parada": "m_idle_neutral_01", "falando": "m_gestic_talk_neutral_01"}),
-    "pm_a": ("Police_Male_01", {"parada": "m_idle_neutral_01", "falando": "m_gestic_talk_neutral_01"}),
     "pm_b": ("Police_Male_04", {"parada": "m_idle_neutral_01", "falando": "m_gestic_talk_neutral_01"}),
 }
 

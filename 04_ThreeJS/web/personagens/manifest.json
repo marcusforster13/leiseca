@@ -70,13 +70,6 @@
    "falando"
   ]
  },
- "pm_a": {
-  "arquivo": "personagens/pm_a.glb",
-  "animacoes": [
-   "parada",
-   "falando"
-  ]
- },
  "pm_b": {
   "arquivo": "personagens/pm_b.glb",
   "animacoes": [

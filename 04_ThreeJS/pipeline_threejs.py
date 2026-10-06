@@ -315,7 +315,7 @@ if os.path.isdir(cen_src):
 transito_src = os.path.normpath(os.path.join(BASE, "..", "01_Cena_Render_Cycles", "modelos", "carros"))
 if os.path.isdir(transito_src):
     os.makedirs(os.path.join(WEB, "transito"), exist_ok=True)
-    for nome in ("suv", "minivan", "taxi", "onibus"):
+    for nome in ("suv", "minivan", "onibus"):
         f = os.path.join(transito_src, nome + ".glb")
         if os.path.exists(f):
             shutil.copy2(f, os.path.join(WEB, "transito", nome + ".glb"))

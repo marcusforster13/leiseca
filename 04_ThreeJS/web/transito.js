@@ -11,7 +11,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const TIPOS = [   // arquivo, comprimento (m), peso no sorteio, faixas permitidas
   { nome: 'suv', comp: 4.6, peso: 3, faixas: [0, 1] },
   { nome: 'minivan', comp: 4.6, peso: 3, faixas: [0, 1] },
-  { nome: 'taxi', comp: 5.1, peso: 3, faixas: [0, 1] },
   { nome: 'onibus', comp: 10.0, peso: 1, faixas: [1] },          // onibus so na faixa da direita
 ];
 const FAIXAS = [1.75, 5.25], X_INI = -62, X_FIM = 62, MAX_ATIVOS = 7;
