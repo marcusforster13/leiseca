@@ -873,6 +873,14 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
         c = sum((f.calc_center_median() for f in frente), Vector()) / len(frente)
         info["janela"] = c.copy()
         info["jx"] = (min(v.co.x for f in frente for v in f.verts), max(v.co.x for f in frente for v in f.verts))
+        if interior:
+            # o modelo traz uma "tampa" preta horizontal dentro da cabine, na altura da base das janelas, para esconder o
+            # interior vazio. Com condutor e bancos la dentro ela corta o personagem no peito: sai.
+            hw_c = max(v.co.y for v in bm.verts)
+            for f in bm.faces:
+                cf = f.calc_center_median()
+                if "glass" not in nomes[f.material_index] and f.normal.z > .7 and min(xs) - .3 < cf.x < max(xs) + .12 and abs(cf.y) < hw_c * .8 and c.z - .38 < cf.z < c.z - .05:
+                    apagar.append(f)
         if janela_aberta: apagar += frente
     if apagar: bmesh.ops.delete(bm, geom=list(set(apagar)), context="FACES")
     tem_porta = False
@@ -912,8 +920,15 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
             box(nome + "_Encosto", (.12, .46, .6), (xb - .3, sy * yb, zb + .34), M["interior"], col, R, rot=(0, .2, 0), bevel=.04)
         box(nome + "_Banco_Tras", (.5, hw * 1.5, .1), (xb - .95, 0, zb + .02), M["interior"], col, R, bevel=.04)
         box(nome + "_Encosto_Tras", (.12, hw * 1.5, .5), (xb - 1.22, 0, zb + .32), M["interior"], col, R, rot=(0, .2, 0), bevel=.04)
-        box(nome + "_Painel", (.3, hw * 1.55, .22), (xb + .78, 0, zb + .42), M["interior"], col, R, bevel=.05)
-        cyl(nome + "_Volante", .17, .17, .026, (xb + .52, yb, zb + .47), M["preto"], col, R, rot=(0, -1.15, 0), seg=18)
+        box(nome + "_Painel", (.3, hw * 1.55, .22), (xb + .8, 0, zb + .21), M["interior"], col, R, bevel=.05)      # topo abaixo do peitoril: nao tapa o condutor
+        # volante: aro (anel), cubo e tres raios. Um disco cheio tapava o peito e os bracos do condutor
+        _vp, _vr = (xb + .52, yb, zb + .39), (0, -1.15, 0)
+        torno(nome + "_Volante", [(.17 + .013 * math.cos(2 * PI * k / 8), .013 * math.sin(2 * PI * k / 8)) for k in range(9)], M["preto"], col, R, pos=_vp, rot=_vr, seg=24)
+        cyl(nome + "_Volante_Cubo", .045, .045, .03, _vp, M["preto"], col, R, rot=_vr, seg=12)
+        for _a in (PI / 2, PI * 7 / 6, PI * 11 / 6):
+            _b = box(nome + "_Volante_Raio", (.15, .028, .012), _vp, M["preto"], col, R, rot=_vr)
+            _b.rotation_euler = (Matrix.Rotation(-1.15, 4, "Y") @ Matrix.Rotation(_a, 4, "Z")).to_euler()
+            _b.location = Vector(_vp) + (Matrix.Rotation(-1.15, 4, "Y") @ Matrix.Rotation(_a, 4, "Z")) @ Vector((.095, 0, 0))
         box(nome + "_Assoalho", (comp * .62, hw * 1.5, .03), (xb - .2, 0, zb - .28), M["preto"], col, R)
         info["banco"] = [xb, yb, zb + .05]
     ev = corpo.evaluated_get(bpy.context.evaluated_depsgraph_get())

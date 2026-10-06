@@ -1,6 +1,6 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 141621 tris | 24 malhas | 117 slots de material (~draw calls) | 16 luzes
+DEPOIS: 141861 tris | 24 malhas | 117 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
   03_Arvores_Postes                     53276
@@ -8,14 +8,14 @@ Triangulos por colecao:
   06_Veiculos_Apoio                     22832
   05_Cones_Barreiras                    12620
   04_Blitz_Estrutura                     9024
-  10_Carro_Abordado                      8074
+  10_Carro_Abordado                      8314
   07_Carro_Regularizacao                 7122
   08_Interativos                         1496
   01_Rua                                 1357
 
 Etapas:
   - Grama instanciada removida de 0 gramados; subdivisao=1, remesh 0.16 m, decimate 35% na folhagem.
-  - Modificadores aplicados em 2301 objetos; textos e fios convertidos em malha.
+  - Modificadores aplicados em 2305 objetos; textos e fios convertidos em malha.
   - Bake de 0 materiais procedurais em texturas de imagem.
   - 11 materiais com texturas CC0 convertidos para UV + PNG (cor, rugosidade, normal).
   - UVs em caixa (escala real em metros) aplicadas em todas as malhas.

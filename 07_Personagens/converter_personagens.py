@@ -185,7 +185,7 @@ def pose_bracos(arm, desejado, f, tgt_inv, tipo):
             L = l1 + l2
             ombro = (desejado[ua.parent.name] @ (ua.parent.matrix_local.inverted() @ ua.matrix_local)).translation
             if tipo == "sentado":
-                punho = pelve + frente * L * .80 + cima * L * .88 + lado * L * .27
+                punho = pelve + frente * L * .80 + cima * L * .76 + lado * L * .27
                 polo = -cima * .85 + lado * .5 - frente * .1
                 dir_mao = (frente * .62 + cima * .68 - lado * .32).normalized()      # dedos por cima do aro
                 angs, pol = (58, 66), (.45, .55, .6)
