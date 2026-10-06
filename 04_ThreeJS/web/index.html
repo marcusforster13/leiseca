@@ -220,7 +220,7 @@ function seguirChao() {
   const r = rayC.intersectObjects(alvosCol, false)[0];
   if (r && r.point.y - rig.position.y < 0.45) rig.position.y += (r.point.y - rig.position.y) * 0.35;   // degraus ate 45 cm
 }
-window.__casa = { rig, camera, mover, ver(x, z, y, p = 0) { rig.position.set(x, 0, z); yaw = y; pitch = p; }, get colisao() { return colisaoAtiva; }, get alvos() { return alvosCol.length; } };   // diagnostico
+window.__casa = { rig, camera, renderer, scene, mover, ver(x, z, y, p = 0) { rig.position.set(x, 0, z); yaw = y; pitch = p; }, get colisao() { return colisaoAtiva; }, get alvos() { return alvosCol.length; } };   // diagnostico
 $('loading').remove();
 
 /* ---------- luzes dinamicas: giroflex e lanterna ---------- */
