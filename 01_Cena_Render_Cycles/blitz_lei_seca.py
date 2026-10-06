@@ -821,6 +821,8 @@ def repintar(img, cor, nome):
     novo = bpy.data.images.new(nome, w, h, alpha=True); novo.pixels.foreach_set(px.ravel()); novo.pack()
     return novo
 
+M["int_forro"] = mat("Interior_Forro", "#1d1f22", .9)      # forro interno do carro abordado
+
 def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=False, interior=False, porta=None, escala=1.0):
     """Importa modelos/carros/<arquivo>.glb com a frente para +X. Devolve (raiz, sup_y, sup_x, info) ou None se faltar."""
     caminho = os.path.join(CARROS, arquivo + ".glb")
@@ -854,7 +856,7 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
             for attr, val in (("surface_render_method", "BLENDED"), ("blend_method", "BLEND")):
                 try: setattr(m, attr, val)
                 except Exception: pass
-        if interior: m.use_backface_culling = False
+        if interior: m.use_backface_culling = "glass" not in nm      # lataria so por fora: por dentro entra o forro (abaixo)
     for o in novos:                                       # rodas: mesmo prefixo "Modelo_", senao o pipeline refaz a UV e embaralha a textura
         if o.type == "MESH" and o is not corpo:
             for s in o.material_slots:
@@ -883,6 +885,17 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
                     apagar.append(f)
         if janela_aberta: apagar += frente
     if apagar: bmesh.ops.delete(bm, geom=list(set(apagar)), context="FACES")
+    if interior:
+        # forro interno: uma copia da lataria, 2 cm para dentro e virada para o interior, em material escuro.
+        # Sem isso via-se a pintura do carro pelo lado de dentro (portas, colunas e teto). Como acompanha a lataria
+        # por dentro, nunca aparece do lado de fora.
+        mi = len(me.materials); me.materials.append(M["int_forro"]); nomes.append("int_forro")
+        dup = bmesh.ops.duplicate(bm, geom=[f for f in bm.faces if "glass" not in nomes[f.material_index]])
+        nf = [g for g in dup["geom"] if isinstance(g, bmesh.types.BMFace)]
+        bm.normal_update()
+        for v in {v for f in nf for v in f.verts}: v.co -= v.normal * .02
+        bmesh.ops.reverse_faces(bm, faces=nf)
+        for f in nf: f.material_index = mi
     tem_porta = False
     if porta and "jx" in info:
         # porta do motorista: recorta a lateral esquerda entre a coluna da frente e a do meio, da soleira ao teto,
@@ -895,7 +908,7 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
             bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
         for f in bm.faces:
             c = f.calc_center_median()
-            f.select = bool(c.y > hw_ * .45 and xd0 < c.x < xd1 and c.z > zb_ and f.normal.z < .8 and f.normal.y > -.3)
+            f.select = bool(c.y > hw_ * .45 and xd0 < c.x < xd1 and c.z > zb_ and abs(f.normal.z) < .8)      # lataria e forro da porta
         tem_porta = any(f.select for f in bm.faces)
         info["dobradica"] = Vector((xd1, hw_ - .04, zb_ + .35))
     bm.to_mesh(me); bm.free()
