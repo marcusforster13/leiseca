@@ -11,7 +11,7 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Esta é a área de regularização: o veículo fica aqui até aparecer um condutor habilitado e em condições."
+[x]  1.  "Esta é a área de regularização: o veículo fica aqui até aparecer um condutor habilitado e em condições."
       Quando: Na área de regularização, quando o agente fala com ele
       Tempo: 8–11 s     Arquivo: fala_agente_regularizacao_01
 
