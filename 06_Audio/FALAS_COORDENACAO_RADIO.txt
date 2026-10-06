@@ -11,15 +11,15 @@ Como gravar:
 
 ------------------------------------------------------------
 
-[ ]  1.  "Agente, veículo selecionado entrando na faixa de abordagem."
+[x]  1.  "Agente, veículo selecionado entrando na faixa de abordagem."
       Quando: Início de cada atendimento
       Tempo: 3–5 s     Arquivo: fala_coordenacao_01
 
-[ ]  2.  "Copiado. Os policiais assumem a condução do condutor à delegacia, com o auto e o resultado impresso."
+[x]  2.  "Copiado. Os policiais assumem a condução do condutor à delegacia, com o auto e o resultado impresso."
       Quando: Quando o agente aciona os policiais em caso de crime
       Tempo: 7–10 s     Arquivo: fala_coordenacao_02
 
-[ ]  3.  "Copiado. Guincho acionado para remoção ao depósito."
+[x]  3.  "Copiado. Guincho acionado para remoção ao depósito."
       Quando: Quando o agente pede a remoção do veículo
       Tempo: 3–4 s     Arquivo: fala_coordenacao_03
 

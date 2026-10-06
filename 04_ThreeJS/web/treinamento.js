@@ -176,6 +176,13 @@ export async function iniciar(ctx) {
     if (npc) { const f = { sintetica: true, ate: performance.now() + (p ? seg + 6 : seg * .8) * 1000 }; npc.userData.fala = f; p?.then(() => { if (npc.userData.fala === f) npc.userData.fala = null; }); }
     return p;
   }
+  // chamada da coordenacao pelo radio: bip, a fala e um bip curto no fim
+  const BIP = () => Math.min(.8, window.__som?.duracao('radio_bip') || .4) + .15;
+  async function radio(texto) {
+    window.__som?.tocar('radio_bip'); await espera(BIP() * 1000);
+    await falar('Rádio · Coordenação', texto, 'm');
+    window.__som?.tocar('radio_bip', null, false, { vol: .35 });
+  }
   // voz do navegador (pt-BR). Retorna uma promessa que termina quando a fala acaba (ou null sem voz)
   function vozSintetica(texto, voz = 'f') {
     const lento = /_lento$/.test(voz); voz = voz.replace('_lento', '');      // fala arrastada (condutor com sinais de embriaguez)
@@ -755,8 +762,7 @@ export async function iniciar(ctx) {
     C.rota = []; C.vel = 0; carro.position.copy(ENTRADA); carro.rotation.y = 0; carro.visible = true;
     pegarEtilometro(false);
     const abrir = () => {
-      window.__som?.tocar('radio_bip');
-      falar('Rádio · Coordenação', CEN.radio.inicio, 'm');
+      radio(CEN.radio.inicio);
       setTimeout(() => dica('Aponte para o carro que chega e aperte o gatilho (ou clique) para sinalizar a parada.'), 3500);
       A.tAuto = setTimeout(() => { if (A && A.fase === 'chegando' && !C.rota.length) entrar(false); }, 16000);
     };
@@ -877,12 +883,12 @@ export async function iniciar(ctx) {
     if (v.alcool === 'sim' && !A.cnh) return painelOpc('Providências', 'Habilitação do condutor', D.cnh, () => { A.cnh = true; aposDecisao(); });
     if (v.condutor === 'alcool_crime' && !A.pm) return painelOpc('Providências', 'Crime de trânsito (art. 306)', [
       { fala: 'Acionar os policiais: condução à delegacia com o auto, o resultado impresso e as testemunhas', acao: 'acionar_pm_crime', radio: true },
-      { fala: 'Deixar o condutor aguardando na tenda e seguir a operação' }], op => { A.pm = true; if (op.radio) { window.__som?.tocar('radio_bip'); falar('Rádio · Coordenação', CEN.radio.crime, 'm'); } setTimeout(aposDecisao, op.radio ? 5200 : 300); });
+      { fala: 'Deixar o condutor aguardando na tenda e seguir a operação' }], op => { A.pm = true; if (op.radio) { radio(CEN.radio.crime); } setTimeout(aposDecisao, op.radio ? (BIP() + duracaoFala(CEN.radio.crime)) * 1000 + 600 : 300); });
     if (!A.veiculoOk) return destinoVeiculo();
   }
   function destinoVeiculo() {
     const D = CEN.dialogos, v = S.variacao, tem = v.passageiro !== 'nenhum';
-    const fim = d => { A.destino = d; A.veiculoOk = true; status(); dica('Fale com o condutor para encerrar o atendimento.'); if (d === 'remover') { window.__som?.tocar('radio_bip'); falar('Rádio · Coordenação', CEN.radio.guincho, 'm'); } };
+    const fim = d => { A.destino = d; A.veiculoOk = true; status(); dica('Fale com o condutor para encerrar o atendimento.'); if (d === 'remover') { radio(CEN.radio.guincho); } };
     const remover = () => {
       if (v.veiculo === 'remover') registrar('veiculo_correto');
       else penalidade(v.veiculo === 'liberar' ? -6 : -3, 'Remoção do veículo sem necessidade', v.veiculo === 'liberar' ? 'Sem irregularidade, o veículo segue com o condutor.' : 'Havia condutor habilitado e apto para assumir o veículo (Res. 1.031/2026, art. 11).');
