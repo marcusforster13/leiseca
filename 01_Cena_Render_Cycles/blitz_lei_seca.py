@@ -963,8 +963,38 @@ def faixa_lateral(nome, R, col, sup_y, x0, x1, z0, z1, m, n=24):
         for i in range(n): fs.append((2 * i, 2 * i + 2, 2 * i + 3, 2 * i + 1))
         malha(nome, vs, fs, m, col, R)
 
+# ---- viatura nova (teste): modelo inteiro enviado pelo usuario (uma malha so, sem rodas separadas), com o nosso giroflex no teto.
+# PARA VOLTAR A VIATURA ANTIGA: USAR_VIATURA_NOVA = False (ou apagar modelos/viatura_nova.glb) e rodar atualizar_tudo.ps1 recriar
+USAR_VIATURA_NOVA = True
+VIATURA_NOVA = os.path.join(AQUI, "modelos", "viatura_nova.glb")
+def carro_inteiro(nome, col, caminho, pos, rz, comp):
+    """Importa um .glb de malha unica com a frente para -Y, poe a frente em +X, o chao em z=0 e o comprimento em 'comp' metros."""
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=caminho)
+    novos = [o for o in bpy.data.objects if o not in antes]
+    ob = max((o for o in novos if o.type == "MESH"), key=lambda o: len(o.data.vertices))
+    me = ob.data; me.transform(ob.matrix_world)
+    xs = [v.co.x for v in me.vertices]; ys = [v.co.y for v in me.vertices]; zs = [v.co.z for v in me.vertices]
+    s = comp / (max(ys) - min(ys))
+    me.transform(Matrix.Translation((-(max(xs) + min(xs)) / 2, -(max(ys) + min(ys)) / 2, -min(zs))))
+    me.transform(Matrix.Scale(s, 4)); me.transform(Matrix.Rotation(PI / 2, 4, "Z")); me.update()
+    R = vazio(nome, pos, col); R.rotation_euler = (0, 0, rz)
+    for o in novos:
+        if o is not ob: bpy.data.objects.remove(o, do_unlink=True)
+    for c in list(ob.users_collection): c.objects.unlink(ob)
+    col.objects.link(ob); ob.parent = R; ob.matrix_world = R.matrix_world.copy(); ob.location = (0, 0, 0); ob.rotation_euler = (0, 0, 0); ob.scale = (1, 1, 1)
+    ob.name = nome + "_Carroceria"
+    for sl in ob.material_slots: sl.material.name = "Modelo_%s_Carroceria" % nome       # UV do modelo preservada no pipeline
+    def teto(x0, x1, yl=.3):                              # altura do teto num trecho do carro
+        return max(v.co.z for v in me.vertices if x0 <= v.co.x <= x1 and abs(v.co.y) < yl)
+    return R, teto
+VTR_NOVA = USAR_VIATURA_NOVA and os.path.exists(VIATURA_NOVA)
+if VTR_NOVA:
+    VTR, teto_ = carro_inteiro("Viatura_PM", C_VEIC, VIATURA_NOVA, (9.6, 5.45, 0), 0, 4.15)
+    giroflex(VTR, C_VEIC, -.34, teto_(-.5, -.18) + .02, larg=.62)      # sobre a base que o modelo ja tem no teto, logo atras da coluna central
+
 # ---- viatura da Policia Militar (apoio a seguranca): perua repintada de branco, faixa azul, giroflex
-r = carro_modelo("Viatura_PM", C_VEIC, "perua", (9.6, 5.45, 0), 0, cor="#eceded", escala=1.08)
+r = None if VTR_NOVA else carro_modelo("Viatura_PM", C_VEIC, "perua", (9.6, 5.45, 0), 0, cor="#eceded", escala=1.08)
 if r:
     VTR, sy_, sx_, inf = r
     giroflex(VTR, C_VEIC, -.25, inf["alt"] + .03, larg=1.05)
@@ -974,7 +1004,7 @@ if r:
         texto("Adesivo_Policia_Militar", "POLÍCIA MILITAR", .085, (-.15, sy_(-.15, .89, lado) + lado * .008, .89), v, M["texto_az"], C_VEIC, VTR)
         texto("Adesivo_190", "190", .12, (-1.67, sy_(-1.67, .91, lado) + lado * .008, .91), v, M["texto_az"], C_VEIC, VTR)
         cyl("Brasao_Imagem", .09, .09, .004, (1.03, sy_(1.03, .89, lado) + lado * .006, .89), M["brasao"], C_VEIC, VTR, rot=(PI / 2, 0, 0), seg=28)
-else:
+elif not VTR_NOVA:
     VTR, sy_, sx_, _ = veiculo("Viatura_PM", C_VEIC, (9.6, 5.45, 0), 0, EST_SUV, M["pint_pm"], M["faixa_pm"], "suv", placa="RJP0M19")
     giroflex(VTR, C_VEIC, -.25, 1.72)
 

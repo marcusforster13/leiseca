@@ -1,11 +1,11 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 146514 tris | 24 malhas | 119 slots de material (~draw calls) | 16 luzes
+DEPOIS: 173052 tris | 24 malhas | 110 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
   03_Arvores_Postes                     53276
+  06_Veiculos_Apoio                     49370
   02_Predios                            25820
-  06_Veiculos_Apoio                     22832
   10_Carro_Abordado                     12967
   05_Cones_Barreiras                    12620
   04_Blitz_Estrutura                     9024
@@ -15,16 +15,16 @@ Triangulos por colecao:
 
 Etapas:
   - Grama instanciada removida de 0 gramados; subdivisao=1, remesh 0.16 m, decimate 35% na folhagem.
-  - Modificadores aplicados em 2305 objetos; textos e fios convertidos em malha.
+  - Modificadores aplicados em 2293 objetos; textos e fios convertidos em malha.
   - Bake de 0 materiais procedurais em texturas de imagem.
   - 11 materiais com texturas CC0 convertidos para UV + PNG (cor, rugosidade, normal).
   - UVs em caixa (escala real em metros) aplicadas em todas as malhas.
-  - Colisao: 241 caixas orientadas preparadas.
+  - Colisao: 237 caixas orientadas preparadas.
   - 6 conjuntos interativos unidos (1 malha por conjunto).
-  - 2257 objetos estaticos unidos em 1 malha por colecao (menos draw calls).
+  - 2245 objetos estaticos unidos em 1 malha por colecao (menos draw calls).
   - Exportado: blitz_lei_seca_VR.glb
   - Exportado: blitz_lei_seca_VR.fbx
-  - Colisao: 241 caixas, 2892 tris -> colisao.glb / colisao.fbx
+  - Colisao: 237 caixas, 2844 tris -> colisao.glb / colisao.fbx
 
 Proximos passos no motor (Unity/Unreal):
   - Iluminacao: marcar a geometria estatica como Static e fazer bake de lightmaps
