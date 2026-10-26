@@ -506,10 +506,10 @@ export async function iniciar(ctx) {
     if (pegar && !naMaoObj) {
       naMaoObj = it.o.clone(); naMaoObj.visible = true;
       // visor (no modelo: em cima do corpo, do lado do bocal) e bocal (na ponta: -Z do aparelho)
-      const visor = new THREE.Mesh(new THREE.PlaneGeometry(.052, .04), new THREE.MeshBasicMaterial({ map: vtex, toneMapped: false, fog: false }));
-      visor.rotation.x = -Math.PI / 2; visor.position.set(0, .0445, -.03); naMaoObj.add(visor);
+      const visor = new THREE.Mesh(new THREE.PlaneGeometry(.036, .033), new THREE.MeshBasicMaterial({ map: vtex, toneMapped: false, fog: false }));
+      visor.rotation.x = -Math.PI / 2; visor.position.set(0, .0305, -.027); naMaoObj.add(visor);
       bocalObj = new THREE.Mesh(new THREE.CylinderGeometry(.0075, .0095, .085, 12), new THREE.MeshStandardMaterial({ color: 0xf2f4f6, roughness: .35 }));
-      ctx.iluminar(bocalObj.material); bocalObj.rotation.x = Math.PI / 2; bocalObj.position.set(0, .022, -.145); bocalObj.visible = false; naMaoObj.add(bocalObj);
+      ctx.iluminar(bocalObj.material); bocalObj.rotation.x = Math.PI / 2; bocalObj.position.set(.01, .014, -.105); bocalObj.visible = false; naMaoObj.add(bocalObj);
     }
     if (naMaoObj) {
       naMaoObj.userData.naBoca = 0; camera.add(naMaoObj); naMaoObj.position.copy(MAO_POS); naMaoObj.quaternion.copy(MAO_ROT);
@@ -525,7 +525,7 @@ export async function iniciar(ctx) {
     EB.copy(OV1); EB.y -= .092; EB.addScaledVector(EZ, .032);          // boca
     // o aparelho vem do lado do agente (pela janela): fica entre a boca e quem segura, puxando um pouco para a frente do rosto
     camera.getWorldPosition(EX); EX.sub(EB); EX.y *= .25; EX.normalize(); EZ.multiplyScalar(.45).add(EX).normalize();
-    pos.copy(EB).addScaledVector(EZ, .178);              // a ponta do bocal (a 18,7 cm do centro do aparelho) entra um pouco na boca
+    pos.copy(EB).addScaledVector(EZ, .137);              // a ponta do bocal (a 14,7 cm do centro do aparelho) entra um pouco na boca
     EYv.set(0, 1, 0).addScaledVector(EZ, -EZ.y).normalize(); EX.crossVectors(EYv, EZ);
     quat.setFromRotationMatrix(EM.makeBasis(EX, EYv, EZ));
     return true;

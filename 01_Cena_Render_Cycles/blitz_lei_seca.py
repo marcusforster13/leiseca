@@ -489,8 +489,49 @@ def balao(x, y):
 balao(-17.0, 9.3)
 
 # ---- moveis de plastico
+def colocar_glb(arquivo, nome, pai, col, ajuste=Matrix()):
+    """Importa modelos/<arquivo> (modelo do usuario) como pecas filhas de 'pai'. 'ajuste' gira/escala/move o modelo
+    no espaco do pai. Materiais ganham o prefixo Modelo_ (UV e texturas preservadas no pipeline). False se faltar o arquivo."""
+    caminho = os.path.join(AQUI, "modelos", arquivo)
+    if not os.path.exists(caminho): return False
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=caminho)
+    novos = [o for o in bpy.data.objects if o not in antes]
+    for o in novos:
+        if o.type != "MESH": continue
+        me = o.data.copy(); me.transform(ajuste @ o.matrix_world)
+        for m in me.materials:
+            if m and not m.name.startswith("Modelo_"): m.name = "Modelo_%s_%s" % (nome, m.name)
+        ob = bpy.data.objects.new("%s_%s" % (nome, o.name.replace(" ", "_")[:36]), me); col.objects.link(ob); ob.parent = pai
+    for o in novos: bpy.data.objects.remove(o, do_unlink=True)
+    return True
+
+# cadeira modelada (modelos/cadeira.glb, encosto para +Y, pes em z=0). Sem o arquivo, volta a cadeira simples feita aqui.
+CADEIRA_GLB = os.path.join(AQUI, "modelos", "cadeira.glb")
+_pecas_cadeira = []
+def pecas_cadeira():
+    """Importa a cadeira uma vez, reduz as pecas muito detalhadas (assento e encosto) e guarda as malhas para reaproveitar."""
+    if not _pecas_cadeira:
+        antes = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=CADEIRA_GLB)
+        novos = [o for o in bpy.data.objects if o not in antes]
+        for o in novos:
+            if o.type != "MESH": continue
+            me = o.data
+            n = len(me.polygons)                              # assento e encosto: 30 mil faces -> 2 mil; tubos e ponteiras: 1/4
+            if n > 300:
+                md = o.modifiers.new("reduz", "DECIMATE"); md.ratio = 2000 / n if n > 3000 else .25
+                dg = bpy.context.evaluated_depsgraph_get(); me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+            _pecas_cadeira.append((me, o.matrix_world.copy()))
+        for o in novos: bpy.data.objects.remove(o, do_unlink=True)
+    return _pecas_cadeira
+
 def cadeira(nome, x, y, rz, col=C_BLITZ):
     r = vazio(nome, (x, y, 0), col, rz)
+    if os.path.exists(CADEIRA_GLB):
+        for i, (me, mw) in enumerate(pecas_cadeira()):
+            ob = bpy.data.objects.new("%s_Peca_%02d" % (nome, i), me); col.objects.link(ob); ob.parent = r; ob.matrix_basis = mw
+        return r
     box(nome + "_Assento", (.44, .44, .035), (0, 0, .44), M["branco"], col, r, bevel=.015)
     box(nome + "_Encosto", (.42, .03, .42), (0, .215, .7), M["branco"], col, r, rot=(-.14, 0, 0), bevel=.012)
     for sx in (-1, 1):
@@ -536,9 +577,11 @@ def tenda(x, y):
     box("Notebook_Tela", (.31, .004, .2), (0, .117, .127), M["tela"], C_BLITZ, nb, rot=(-.22, 0, 0))
     box("Impressora_Termica", (.16, .2, .11), (x + .95, y + .3, .8), M["preto"], C_BLITZ, bevel=.02)
     box("Bobina_Papel", (.1, .005, .09), (x + .95, y + .2, .87), M["papel"], C_BLITZ, rot=(.5, 0, 0))
-    for k in range(2):
-        box("Prancheta_%d" % k, (.23, .32, .008), (x + .35 + k * .28, y + .2, .747), M["loja"], C_BLITZ, rot=(0, 0, .15 - k * .3))
-        box("Prancheta_Papel_%d" % k, (.21, .29, .003), (x + .35 + k * .28, y + .2, .753), M["papel"], C_BLITZ, rot=(0, 0, .15 - k * .3))
+    for k in range(2):                                   # pranchetas com o termo de constatacao (modelo do usuario)
+        pr = vazio("Prancheta_%d" % k, (x + .35 + k * .28, y + .2, .743), C_BLITZ, .15 - k * .3)
+        if not colocar_glb("prancheta.glb", "Prancheta_%d" % k, pr, C_BLITZ):
+            box("Prancheta_%d_Placa" % k, (.23, .32, .008), (0, 0, .004), M["loja"], C_BLITZ, pr)
+            box("Prancheta_Papel_%d" % k, (.21, .29, .003), (0, 0, .01), M["papel"], C_BLITZ, pr)
 tenda(-10.0, 5.4)
 
 # ---- torre de iluminacao portatil (tripe)
@@ -1010,20 +1053,39 @@ if not carro_modelo("Carro_Regularizacao", C_REG, "seda", (13.2, 1.75, 0), .04, 
 # ================================================================== 7. EQUIPAMENTOS (interativos)
 # mesa de equipamentos ao lado do ponto de abordagem
 MX, MY = -4.2, 4.35
-mesa("Mesa_Equipamentos", MX, MY, 0, (1.5, .7), toalha=M["azul"])
+if not colocar_glb("mesa_equipamentos.glb", "Mesa_Equipamentos", vazio("Mesa_Equipamentos", (MX, MY, 0), C_BLITZ), C_BLITZ):     # modelo do usuario: lona azul com o logo na frente
+    mesa("Mesa_Equipamentos_Simples", MX, MY, 0, (1.5, .7), toalha=M["azul"])
 ZT = .758
 mal = vazio("I_Maleta_Etilometro", (MX - .42, MY + .05, ZT), C_INT, .12)
-box("I_Maleta_Base", (.42, .32, .1), (0, 0, .05), M["maleta"], C_INT, mal, bevel=.015)
-box("I_Maleta_Espuma", (.38, .28, .02), (0, 0, .095), M["espuma"], C_INT, mal)
-box("I_Maleta_Tampa", (.42, .05, .32), (0, .185, .2), M["maleta"], C_INT, mal, rot=(-.25, 0, 0), bevel=.015)
-box("I_Maleta_Impressora", (.12, .09, .05), (-.1, .06, .125), M["preto"], C_INT, mal, bevel=.01)
+# maleta fechada (modelo do usuario, ampliado para ~42 x 32 x 17 cm) e, na frente dela, a impressora portatil do comprovante
+if not colocar_glb("maleta.glb", "I_Maleta", mal, C_INT, Matrix.Scale(3.5, 4)):
+    box("I_Maleta_Base", (.42, .32, .1), (0, 0, .05), M["maleta"], C_INT, mal, bevel=.015)
+    box("I_Maleta_Tampa", (.42, .05, .32), (0, .185, .2), M["maleta"], C_INT, mal, rot=(-.25, 0, 0), bevel=.015)
+if not colocar_glb("impressora.glb", "I_Maleta_Impressora", mal, C_INT, Matrix.Translation((-.05, -.29, 0)) @ Matrix.Rotation(-.15, 4, "Z")):
+    box("I_Maleta_Impressora", (.12, .09, .05), (-.05, -.29, .025), M["preto"], C_INT, mal, bevel=.01)
 
 eti = vazio("I_Etilometro", (MX + .02, MY - .08, ZT), C_INT, -.3)
-box("I_Etilometro_Corpo", (.075, .15, .04), (0, 0, .02), M["preto"], C_INT, eti, bevel=.012, seg=3)
-box("I_Etilometro_Visor", (.055, .045, .004), (0, .03, .041), M["tela_verde"], C_INT, eti)
-for kx in (-.02, 0, .02):
-    cyl("I_Etilometro_Botao", .007, .007, .004, (kx, -.035, .042), M["azul_claro"], C_INT, eti, seg=10)
-cyl("I_Etilometro_Encaixe", .011, .011, .03, (0, .088, .022), M["metal"], C_INT, eti, rot=(PI / 2, 0, 0), seg=12)
+ETI_GLB = os.path.join(AQUI, "modelos", "etilometro.glb")      # modelo do usuario (em pe: bocal para +Z, visor para -Y)
+if os.path.exists(ETI_GLB):
+    # deitado na mesa como o antigo: ponta do bocal para +Y, visor para cima; o bocal descartavel vem do site (so aparece no teste)
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=ETI_GLB)
+    novos = [o for o in bpy.data.objects if o not in antes]
+    deita = Matrix.Translation((0, -.0625, .014)) @ Matrix.Rotation(-PI / 2, 4, "X")
+    for o in novos:
+        if o.type != "MESH" or o.name.lower().startswith("bocal"):
+            continue
+        me = o.data.copy(); me.transform(deita @ o.matrix_world)
+        for i, m in enumerate(me.materials):
+            if m and not m.name.startswith("Modelo_"): m.name = "Modelo_Etilometro_" + m.name        # UV e textura do visor preservadas
+        ob = bpy.data.objects.new("I_Etilometro_" + o.name.replace(" ", "_")[:40], me); C_INT.objects.link(ob); ob.parent = eti
+    for o in novos: bpy.data.objects.remove(o, do_unlink=True)
+else:
+    box("I_Etilometro_Corpo", (.075, .15, .04), (0, 0, .02), M["preto"], C_INT, eti, bevel=.012, seg=3)
+    box("I_Etilometro_Visor", (.055, .045, .004), (0, .03, .041), M["tela_verde"], C_INT, eti)
+    for kx in (-.02, 0, .02):
+        cyl("I_Etilometro_Botao", .007, .007, .004, (kx, -.035, .042), M["azul_claro"], C_INT, eti, seg=10)
+    cyl("I_Etilometro_Encaixe", .011, .011, .03, (0, .088, .022), M["metal"], C_INT, eti, rot=(PI / 2, 0, 0), seg=12)
 
 cx = vazio("I_Caixa_Bocais", (MX + .38, MY + .08, ZT), C_INT, .2)
 box("I_Caixa_Bocais_Caixa", (.22, .16, .07), (0, 0, .035), M["branco"], C_INT, cx, bevel=.008)
@@ -1036,7 +1098,8 @@ box("I_Tablet_Corpo", (.25, .17, .01), (0, 0, .005), M["preto"], C_INT, tab, bev
 box("I_Tablet_Tela", (.225, .15, .002), (0, 0, .0105), M["tela"], C_INT, tab)
 
 lix = vazio("I_Lixeira_Bocais", (MX + 1.05, MY - .1, 0), C_INT)
-torno("I_Lixeira_Corpo", [(.0, 0), (.13, 0), (.16, .38), (.15, .38), (.12, .02)], M["azul"], C_INT, lix, seg=16)
+if not colocar_glb("lixeira.glb", "I_Lixeira", lix, C_INT):                # modelo do usuario: lixeira aberta
+    torno("I_Lixeira_Corpo", [(.0, 0), (.13, 0), (.16, .38), (.15, .38), (.12, .02)], M["azul"], C_INT, lix, seg=16)
 
 # mesa de teste / regularizacao (ao lado do segundo carro)
 mesa("Mesa_Teste", 8.4, 3.0, .15)
