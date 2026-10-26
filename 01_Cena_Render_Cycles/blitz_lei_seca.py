@@ -523,7 +523,10 @@ def pecas_cadeira():
         for o in novos:
             if o.type != "MESH": continue
             me = o.data
-            if leve: _pecas_cadeira.append((me, o.matrix_world.copy())); continue
+            if leve:                                          # o encosto vinha partido em pedacos soltos (vertices repetidos), e o
+                bm = bmesh.new(); bm.from_mesh(me); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)   # calculo de luz deixava um X preto
+                bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free()
+                _pecas_cadeira.append((me, o.matrix_world.copy())); continue
             n = len(me.polygons)                              # assento e encosto: 30 mil faces -> 3,5 mil; estrutura preta: 30%;
             mat = (me.materials[0].name if me.materials and me.materials[0] else "").lower()
             if n > 3000 or (n > 200 and any(k in mat for k in ("aco", "ponteira", "parafuso"))):   # bracos brancos ficam inteiros
@@ -639,7 +642,7 @@ def barreira(i, x, y, rz):
     ob = malha("Barreira_%d_Corpo" % i, vs, fs, M["barreira"], C_SINAL, r)
     b = ob.modifiers.new("Chanfro", "BEVEL"); b.width = .04; b.segments = 2
     for sy in (-1, 1):
-        box("Barreira_%d_Faixa" % i, (1.3, .012, .16), (0, sy * .185, .45), M["refletivo"], C_SINAL, r, rot=(sy * -.18, 0, 0))
+        box("Barreira_%d_Faixa" % i, (1.3, .012, .16), (0, sy * .165, .45), M["refletivo"], C_SINAL, r, rot=(sy * .181, 0, 0))   # deitada junto da parede inclinada (antes saia para fora)
 for i, (x, y, rz) in enumerate(((-24.5, 5.9, 1.25), (-24.9, 4.3, 1.25), (-12.6, 6.9, 0), (24.5, 4.6, 1.57), (24.5, 6.3, 1.57), (-27.0, 6.4, 1.25))):
     barreira(i, x, y, rz)
 

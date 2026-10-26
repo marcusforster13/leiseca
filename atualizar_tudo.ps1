@@ -25,14 +25,14 @@ Pop-Location
 
 Write-Host "1/3  Gerando versao VR (Unity/Unreal)..."
 Push-Location "$D\02_Cena_VR_Otimizada"
-& $B -b "$D\01_Cena_Render_Cycles\blitz_lei_seca.blend" --python "otimizar_para_vr.py" *> vr_log.txt
+& $B -b --factory-startup "$D\01_Cena_Render_Cycles\blitz_lei_seca.blend" --python "otimizar_para_vr.py" *> vr_log.txt
 Pop-Location
 Select-String -Path "$D\02_Cena_VR_Otimizada\vr_log.txt" -Pattern '^\[VR\] (TOTAL|Colisao)' | ForEach-Object { $_.Line }
 
 Write-Host "2/3  Gerando versao three.js (bake de lightmaps)..."
 Push-Location "$D\04_ThreeJS"
 $nivel = $args | Where-Object { $_ -in "rapido", "alta" }
-& $B -b "$D\02_Cena_VR_Otimizada\blitz_lei_seca_VR.blend" --python "pipeline_threejs.py" -- $nivel *> pipeline_log.txt
+& $B -b --factory-startup "$D\02_Cena_VR_Otimizada\blitz_lei_seca_VR.blend" --python "pipeline_threejs.py" -- $nivel *> pipeline_log.txt
 Pop-Location
 Select-String -Path "$D\04_ThreeJS\pipeline_log.txt" -Pattern '^\[THREE\]' | ForEach-Object { $_.Line }
 

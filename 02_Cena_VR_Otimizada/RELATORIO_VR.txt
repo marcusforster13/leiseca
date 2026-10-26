@@ -1,9 +1,9 @@
 OPERACAO LEI SECA - VERSAO VR OTIMIZADA
 
-DEPOIS: 285980 tris | 24 malhas | 170 slots de material (~draw calls) | 16 luzes
+DEPOIS: 285146 tris | 24 malhas | 170 slots de material (~draw calls) | 16 luzes
 
 Triangulos por colecao:
-  04_Blitz_Estrutura                   114663
+  04_Blitz_Estrutura                   113829
   03_Arvores_Postes                     53276
   08_Interativos                        35323
   02_Predios                            25820
@@ -19,12 +19,12 @@ Etapas:
   - Bake de 0 materiais procedurais em texturas de imagem.
   - 11 materiais com texturas CC0 convertidos para UV + PNG (cor, rugosidade, normal).
   - UVs em caixa (escala real em metros) aplicadas em todas as malhas.
-  - Colisao: 301 caixas orientadas preparadas.
+  - Colisao: 289 caixas orientadas preparadas.
   - 6 conjuntos interativos unidos (1 malha por conjunto).
   - 2519 objetos estaticos unidos em 1 malha por colecao (menos draw calls).
   - Exportado: blitz_lei_seca_VR.glb
   - Exportado: blitz_lei_seca_VR.fbx
-  - Colisao: 301 caixas, 3612 tris -> colisao.glb / colisao.fbx
+  - Colisao: 289 caixas, 3468 tris -> colisao.glb / colisao.fbx
 
 Proximos passos no motor (Unity/Unreal):
   - Iluminacao: marcar a geometria estatica como Static e fazer bake de lightmaps
