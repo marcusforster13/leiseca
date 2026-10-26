@@ -489,7 +489,7 @@ def balao(x, y):
 balao(-17.0, 9.3)
 
 # ---- moveis de plastico
-def colocar_glb(arquivo, nome, pai, col, ajuste=Matrix()):
+def colocar_glb(arquivo, nome, pai, col, ajuste=Matrix(), reduzir=None):
     """Importa modelos/<arquivo> (modelo do usuario) como pecas filhas de 'pai'. 'ajuste' gira/escala/move o modelo
     no espaco do pai. Materiais ganham o prefixo Modelo_ (UV e texturas preservadas no pipeline). False se faltar o arquivo."""
     caminho = os.path.join(AQUI, "modelos", arquivo)
@@ -499,7 +499,11 @@ def colocar_glb(arquivo, nome, pai, col, ajuste=Matrix()):
     novos = [o for o in bpy.data.objects if o not in antes]
     for o in novos:
         if o.type != "MESH": continue
-        me = o.data.copy(); me.transform(ajuste @ o.matrix_world)
+        me = o.data.copy()
+        if reduzir and len(o.data.polygons) > reduzir[0]:     # (faces minimas, fator): simplifica pecas detalhadas demais para o Quest
+            md = o.modifiers.new("reduz", "DECIMATE"); md.ratio = reduzir[1]
+            me = bpy.data.meshes.new_from_object(o.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+        me.transform(ajuste @ o.matrix_world)
         for m in me.materials:
             if m and not m.name.startswith("Modelo_"): m.name = "Modelo_%s_%s" % (nome, m.name)
         ob = bpy.data.objects.new("%s_%s" % (nome, o.name.replace(" ", "_")[:36]), me); col.objects.link(ob); ob.parent = pai
@@ -515,12 +519,15 @@ def pecas_cadeira():
         antes = set(bpy.data.objects)
         bpy.ops.import_scene.gltf(filepath=CADEIRA_GLB)
         novos = [o for o in bpy.data.objects if o not in antes]
+        leve = sum(len(o.data.polygons) for o in novos if o.type == "MESH") < 15000      # versao ja otimizada pelo usuario: usa como veio
         for o in novos:
             if o.type != "MESH": continue
             me = o.data
-            n = len(me.polygons)                              # assento e encosto: 30 mil faces -> 2 mil; tubos e ponteiras: 1/4
-            if n > 300:
-                md = o.modifiers.new("reduz", "DECIMATE"); md.ratio = 2000 / n if n > 3000 else .25
+            if leve: _pecas_cadeira.append((me, o.matrix_world.copy())); continue
+            n = len(me.polygons)                              # assento e encosto: 30 mil faces -> 3,5 mil; estrutura preta: 30%;
+            mat = (me.materials[0].name if me.materials and me.materials[0] else "").lower()
+            if n > 3000 or (n > 200 and any(k in mat for k in ("aco", "ponteira", "parafuso"))):   # bracos brancos ficam inteiros
+                md = o.modifiers.new("reduz", "DECIMATE"); md.ratio = 3500 / n if n > 3000 else .3        # (a estrutura preta, por baixo, pode afinar)
                 dg = bpy.context.evaluated_depsgraph_get(); me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
             _pecas_cadeira.append((me, o.matrix_world.copy()))
         for o in novos: bpy.data.objects.remove(o, do_unlink=True)
@@ -572,11 +579,13 @@ def tenda(x, y):
     cadeira("Tenda_Cadeira_2", x - 1.0, y - .7, PI * .92); cadeira("Tenda_Cadeira_3", x - 2.2, y - .2, PI * .6)
     # notebook, impressora termica e pranchetas
     nb = vazio("Notebook", (x - .7, y + .25, .745), C_BLITZ, PI, )
-    box("Notebook_Base", (.34, .24, .016), (0, 0, .008), M["metal"], C_BLITZ, nb, bevel=.004)
-    box("Notebook_Tampa", (.34, .012, .23), (0, .125, .125), M["metal"], C_BLITZ, nb, rot=(-.22, 0, 0))
-    box("Notebook_Tela", (.31, .004, .2), (0, .117, .127), M["tela"], C_BLITZ, nb, rot=(-.22, 0, 0))
-    box("Impressora_Termica", (.16, .2, .11), (x + .95, y + .3, .8), M["preto"], C_BLITZ, bevel=.02)
-    box("Bobina_Papel", (.1, .005, .09), (x + .95, y + .2, .87), M["papel"], C_BLITZ, rot=(.5, 0, 0))
+    if not colocar_glb("notebook.glb", "Notebook", nb, C_BLITZ):              # modelo do usuario, ja otimizado (tela para +Y)
+        box("Notebook_Base", (.34, .24, .016), (0, 0, .008), M["metal"], C_BLITZ, nb, bevel=.004)
+        box("Notebook_Tampa", (.34, .012, .23), (0, .125, .125), M["metal"], C_BLITZ, nb, rot=(-.22, 0, 0))
+        box("Notebook_Tela", (.31, .004, .2), (0, .117, .127), M["tela"], C_BLITZ, nb, rot=(-.22, 0, 0))
+    imp = vazio("Impressora_Termica", (x + .95, y + .3, .745), C_BLITZ, PI + .2)          # a mesma impressora portatil da mesa dos equipamentos
+    if not colocar_glb("impressora.glb", "Impressora_Termica", imp, C_BLITZ):
+        box("Impressora_Termica_Corpo", (.16, .2, .11), (0, 0, .055), M["preto"], C_BLITZ, imp, bevel=.02)
     for k in range(2):                                   # pranchetas com o termo de constatacao (modelo do usuario)
         pr = vazio("Prancheta_%d" % k, (x + .35 + k * .28, y + .2, .743), C_BLITZ, .15 - k * .3)
         if not colocar_glb("prancheta.glb", "Prancheta_%d" % k, pr, C_BLITZ):
@@ -1104,8 +1113,12 @@ if not colocar_glb("lixeira.glb", "I_Lixeira", lix, C_INT):                # mod
 # mesa de teste / regularizacao (ao lado do segundo carro)
 mesa("Mesa_Teste", 8.4, 3.0, .15)
 cadeira("Cadeira_Teste_0", 7.5, 3.6, .5, C_BLITZ); cadeira("Cadeira_Teste_1", 7.3, 2.6, 1.3, C_BLITZ)
-box("Maleta_Teste", (.4, .3, .11), (8.25, 3.05, .8), M["maleta"], C_BLITZ, bevel=.015)
-box("Maleta_Chao", (.45, .16, .34), (7.75, 2.5, .17), M["maleta"], C_BLITZ, bevel=.02)
+mt = vazio("Maleta_Teste", (8.25, 3.05, .745), C_BLITZ)                  # a mesma maleta da mesa dos equipamentos (~40 x 30 x 16 cm)
+if not colocar_glb("maleta.glb", "Maleta_Teste", mt, C_BLITZ, Matrix.Scale(3.3, 4)):
+    box("Maleta_Teste_Corpo", (.4, .3, .11), (0, 0, .055), M["maleta"], C_BLITZ, mt, bevel=.015)
+mc = vazio("Maleta_Chao", (7.75, 2.5, 0), C_BLITZ)                          # maleta nova em pe no chao, alca para cima
+if not colocar_glb("maleta.glb", "Maleta_Chao", mc, C_BLITZ, Matrix.Translation((0, -.086, .161)) @ Matrix.Rotation(-PI / 2, 4, "X") @ Matrix.Scale(3.5, 4)):
+    box("Maleta_Chao_Corpo", (.45, .16, .34), (0, 0, .17), M["maleta"], C_BLITZ, mc, bevel=.02)
 
 # ================================================================== 8. CAMERAS, CEU, RENDER
 def camera(nome, pos, alvo, lente=24):
