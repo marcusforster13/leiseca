@@ -1100,10 +1100,13 @@ else:
     cyl("I_Etilometro_Encaixe", .011, .011, .03, (0, .088, .022), M["metal"], C_INT, eti, rot=(PI / 2, 0, 0), seg=12)
 
 cx = vazio("I_Caixa_Bocais", (MX + .38, MY + .08, ZT), C_INT, .2)
-box("I_Caixa_Bocais_Caixa", (.22, .16, .07), (0, 0, .035), M["branco"], C_INT, cx, bevel=.008)
-for k in range(8):
-    cyl("I_Bocal_Embalado", .009, .009, .1, (-.08 + (k % 4) * .053, -.035 + (k // 4) * .07, .078), M["bocal"], C_INT, cx, rot=(PI / 2, 0, rnd.uniform(-.2, .2)), seg=8)
-texto("I_Caixa_Bocais_Texto", "BOCAIS DESCARTÁVEIS", .017, (0, -.082, .035), "-y", M["texto_az"], C_INT, cx)
+if colocar_glb("caixa_bocais.glb", "I_Caixa_Bocais", cx, C_INT):         # modelo do usuario: bocais em pacotes individuais
+    for k in range(8): rnd.uniform(-.2, .2)                                   # mantem a sequencia aleatoria do resto da cena
+else:
+    box("I_Caixa_Bocais_Caixa", (.22, .16, .07), (0, 0, .035), M["branco"], C_INT, cx, bevel=.008)
+    for k in range(8):
+        cyl("I_Bocal_Embalado", .009, .009, .1, (-.08 + (k % 4) * .053, -.035 + (k // 4) * .07, .078), M["bocal"], C_INT, cx, rot=(PI / 2, 0, rnd.uniform(-.2, .2)), seg=8)
+    texto("I_Caixa_Bocais_Texto", "BOCAIS DESCARTÁVEIS", .017, (0, -.082, .035), "-y", M["texto_az"], C_INT, cx)
 
 tab = vazio("I_Tablet", (MX + .2, MY - .2, ZT), C_INT, .35)
 if not colocar_glb("tablet.glb", "I_Tablet", tab, C_INT):                  # modelo do usuario: tela de consulta
