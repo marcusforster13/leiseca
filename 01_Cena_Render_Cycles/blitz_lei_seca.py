@@ -1106,8 +1106,9 @@ for k in range(8):
 texto("I_Caixa_Bocais_Texto", "BOCAIS DESCARTÁVEIS", .017, (0, -.082, .035), "-y", M["texto_az"], C_INT, cx)
 
 tab = vazio("I_Tablet", (MX + .2, MY - .2, ZT), C_INT, .35)
-box("I_Tablet_Corpo", (.25, .17, .01), (0, 0, .005), M["preto"], C_INT, tab, bevel=.004)
-box("I_Tablet_Tela", (.225, .15, .002), (0, 0, .0105), M["tela"], C_INT, tab)
+if not colocar_glb("tablet.glb", "I_Tablet", tab, C_INT):                  # modelo do usuario: tela de consulta
+    box("I_Tablet_Corpo", (.25, .17, .01), (0, 0, .005), M["preto"], C_INT, tab, bevel=.004)
+    box("I_Tablet_Tela", (.225, .15, .002), (0, 0, .0105), M["tela"], C_INT, tab)
 
 lix = vazio("I_Lixeira_Bocais", (MX + 1.05, MY - .1, 0), C_INT)
 if not colocar_glb("lixeira.glb", "I_Lixeira", lix, C_INT):                # modelo do usuario: lixeira aberta
