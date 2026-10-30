@@ -1008,14 +1008,24 @@ def carro_modelo(nome, col, arquivo, pos, rz, cor=None, tirar=(), janela_aberta=
         return lc.x if ok else ponta * comp / 2
     return R, sup_y, sup_x, info
 
-def faixa_lateral(nome, R, col, sup_y, x0, x1, z0, z1, m, n=24):
-    """Faixa pintada que acompanha a lateral do carro (dos dois lados)."""
+def faixa_lateral(nome, R, col, sup_y, x0, x1, z0, z1, m, n=60):
+    """Faixa pintada que acompanha a lateral do carro (dos dois lados). Onde a lataria some (caixa de roda), a faixa
+    e interrompida: antes ela afundava ate o pneu."""
     for lado in (1, -1):
         vs, fs = [], []
         for i in range(n + 1):
             x = x0 + (x1 - x0) * i / n
             for z in (z0, z1): vs.append((x, sup_y(x, z, lado) + lado * .006, z))
-        for i in range(n): fs.append((2 * i, 2 * i + 2, 2 * i + 3, 2 * i + 1))
+        d = [min(lado * vs[2 * i][1], lado * vs[2 * i + 1][1]) for i in range(n + 1)]     # quanto a lataria sai para o lado
+        jan = max(1, int(.5 / ((x1 - x0) / n)))                                          # vizinhanca de ~0,5 m
+        ok = [d[i] > max(d[max(0, i - jan):i + jan + 1]) - .05 for i in range(n + 1)]    # afundou 5 cm = caixa de roda
+        seg = [all(ok[max(0, i - 1):i + 3]) for i in range(n)]
+        i = 0
+        while i < n:                                                                      # trechos com menos de 25 cm: fora
+            j = i
+            while j < n and seg[j] == seg[i]: j += 1
+            if seg[i] and (j - i) * (x1 - x0) / n >= .25: fs += [(2 * k, 2 * k + 2, 2 * k + 3, 2 * k + 1) for k in range(i, j)]
+            i = j
         malha(nome, vs, fs, m, col, R)
 
 # ---- viatura da Policia Militar (apoio a seguranca): perua repintada de branco, faixa azul, giroflex
